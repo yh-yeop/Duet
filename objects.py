@@ -171,7 +171,7 @@ class Intro(Screen):
     
     def update(self,now):
         if self.is_screen:
-            self.r=max(setting.size[1]-now/4+200,100)
+            self.r=max(self.r-now/4,100)
             if self.r>setting.size[1]-100: self.alpha+=9
 
             else:
