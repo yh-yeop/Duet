@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 setting=Setting()
 FRAME_SPEED=setting.SPEED_CONSTANT
-
+#ASDASD
 
 
 class Objects(pygame.sprite.Sprite):
