@@ -116,7 +116,6 @@ class Obstacle(Objects):
         re_value=[(pygame.sprite.collide_mask(self,players[i]),i) for i in range(2)]
         for row in re_value:
             if self.invincible and row[0]:
-                print("*"*50)
                 pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
         return re_value
 
