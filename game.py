@@ -22,7 +22,7 @@ class Duet(Setting):
         self.intro=Intro()
         self.menu=Menu()
         self.in_game=InGame()
-        self.in_game.level=Level("test_level_2")
+        self.in_game.level=Level("test_level_3")
         self.screens=[self.intro,self.menu,self.in_game]
 
         self.mouse_hitbox=Objects(pygame.mouse.get_pos(),pygame.Surface((1,1)))
