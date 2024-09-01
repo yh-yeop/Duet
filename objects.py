@@ -171,11 +171,11 @@ class Intro(Screen):
     
     def update(self,now):
         if self.is_screen:
-            self.r=max(self.r-now/4,100)
-            if self.r>setting.size[1]-100: self.alpha+=9
+            self.r=max(self.r-(now/4)*FRAME_SPEED,100)
+            if self.r>setting.size[1]-100: self.alpha+=9*FRAME_SPEED
 
             else:
-                self.alpha=max(self.alpha-4,0)
+                self.alpha=max(self.alpha-4*FRAME_SPEED,0)
                 for i in np.arange(0,len(self.texts),2): self.texts[i][0].set_alpha(self.alpha)
 
             for i in np.arange(0,len(self.texts),2): self.texts[i+1][0].set_alpha(self.alpha)
@@ -209,7 +209,7 @@ class Menu(Screen):
         self.surface.fill((0,0,0,0))
         if self.start and self.is_screen:
             if self.text[1][1]!=25:
-                self.text[1][1]=min(self.text[1][1]+11,25)
+                self.text[1][1]=min(self.text[1][1]+11*FRAME_SPEED,25)
                 if self.log_print and self.text[1][1]==25:
                     with open("Duet/menu_log.txt","at") as f:
                         print("텍스트 나왔음",pygame.time.get_ticks(),file=f)

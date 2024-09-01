@@ -99,7 +99,7 @@ class Duet(Setting):
             if self.in_game.is_screen:
                 collide_check=self.in_game.collide_check(self.player.sprites())
                 if collide_check:
-                    pass
+                    print("충돌함")
 
             if not self.check["menu"]: self.check["menu"]=self.menu.button_check(self.mouse_hitbox,False)
 
