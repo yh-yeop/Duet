@@ -65,14 +65,14 @@ class Duet(Setting):
                         self.direction=-1
                     if event.key==pygame.K_RIGHT:
                         self.direction=1
-                    if self.in_game.is_screen and event.key==pygame.K_ESCAPE:
+                    if event.key==pygame.K_ESCAPE:
                         screen_change(self.screens,self.menu)
 
-                    if event.key==pygame.K_0:
-                        self.player.sprites()[0].angle=180
-                        self.player.sprites()[1].angle=0
-                    if event.key==pygame.K_1:
-                        Objects.box=not Objects.box
+                if event.key==pygame.K_0:
+                    self.player.sprites()[0].angle=180
+                    self.player.sprites()[1].angle=0
+                if event.key==pygame.K_1:
+                    Objects.box=not Objects.box
                 if event.key==pygame.K_3:
                     self.direction=0
                     self.pause=not self.pause
@@ -94,8 +94,7 @@ class Duet(Setting):
 
     def move(self):
         if not self.pause:
-            self.intro.update(self.now)
-            for screen in self.screens[1:]: screen.update()
+            for screen in self.screens: screen.update()
             if self.in_game.is_screen:
                 collide_check=self.in_game.collide_check(self.player.sprites())
                 if collide_check:

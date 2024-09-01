@@ -169,13 +169,13 @@ class Intro(Screen):
             return True
         return False
     
-    def update(self,now):
+    def update(self):
         if self.is_screen:
-            self.r=max(self.r-(now/4)*FRAME_SPEED,100)
-            if self.r>setting.size[1]-100: self.alpha+=9*FRAME_SPEED
+            self.r=max(self.r-3,100)
+            if self.r>setting.size[1]-100: self.alpha+=5
 
             else:
-                self.alpha=max(self.alpha-4*FRAME_SPEED,0)
+                self.alpha=max(self.alpha-4,0)
                 for i in np.arange(0,len(self.texts),2): self.texts[i][0].set_alpha(self.alpha)
 
             for i in np.arange(0,len(self.texts),2): self.texts[i+1][0].set_alpha(self.alpha)
