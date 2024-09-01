@@ -96,7 +96,7 @@ class Duet(Setting):
         self.intro.update(self.now)
         for screen in self.screens[1:]: screen.update()
         if self.in_game.is_screen:
-            self.in_game.collide_check(self.player.sprites())
+            print(self.in_game.collide_check(self.player.sprites()))
 
 
         if not self.check["menu"]: self.check["menu"]=self.menu.button_check(self.mouse_hitbox,False)
