@@ -1,0 +1,2 @@
+shape,dx,dy,x,y,w,h,angle,angle_plus,dx_plus,dy_plus
+rect, 0, 1.6, 100, 0, 230, 35, 45, 2, 0, 0
