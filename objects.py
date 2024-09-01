@@ -163,6 +163,7 @@ class Intro(Screen):
                 
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 
+
     def is_intro_done(self):
         if self.is_screen and self.r==100:
             self.is_screen=False
