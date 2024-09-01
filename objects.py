@@ -21,7 +21,6 @@ class Player(Objects):
     speed=2
     r=12
     distance=setting.center[0]//5*2
-    pause=False
     def __init__(self,color,center,direction):
         self.center=Vector2(center)
         self.angle=180 if direction=="left" else 0
@@ -35,27 +34,25 @@ class Player(Objects):
 
     
     def update(self,angle_plus):
-        if not self.pause:
-            self.angle+=angle_plus*self.speed*FRAME_SPEED
-            self.rect.center=self.center+Vector2(self.distance,0).rotate(self.angle)
-            self.particle_group.add(Particle(self.color,self.rect.topleft,self.angle))
-            self.particle_group.update()
-            for p in self.particle_group:
-                if (not p.image.get_alpha()) or (not p.size):
-                    self.particle_group.remove(p)
+        self.angle+=angle_plus*self.speed*FRAME_SPEED
+        self.rect.center=self.center+Vector2(self.distance,0).rotate(self.angle)
+        self.particle_group.add(Particle(self.color,self.rect.topleft,self.angle))
+        self.particle_group.update()
+        for p in self.particle_group:
+            if (not p.image.get_alpha()) or (not p.size):
+                self.particle_group.remove(p)
 
 
 
     def blit(self,background):
-        if not self.pause:
-            player_surface=pygame.Surface(setting.size,pygame.SRCALPHA)
-            for p in self.particle_group: p.blit(player_surface)
-            pygame.draw.circle(player_surface,(*self.color,self.alpha),self.rect.topleft,self.r)
-            if self.box:
-                a=self.rect.copy()
-                a.center=a.topleft
-                player_surface.blit(self.image,a.topleft)
-            background.blit(player_surface,(0,0))
+        player_surface=pygame.Surface(setting.size,pygame.SRCALPHA)
+        for p in self.particle_group: p.blit(player_surface)
+        pygame.draw.circle(player_surface,(*self.color,self.alpha),self.rect.topleft,self.r)
+        if self.box:
+            a=self.rect.copy()
+            a.center=a.topleft
+            player_surface.blit(self.image,a.topleft)
+        background.blit(player_surface,(0,0))
 
 class Particle(Objects):
     speed=0
@@ -92,7 +89,7 @@ class Obstacle(Objects):
         else: raise SyntaxError
         image.fill(setting.white)
         super().__init__(Vector2(self.x,self.y),image,self.angle)
-        self.invincible=True
+        self.invincible=False
         self.pos=list(self.rect.center)
         self.backup_image=self.image.copy()
 
@@ -106,14 +103,19 @@ class Obstacle(Objects):
         if self.angle:
             self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
             self.rect=self.image.get_rect(center=self.pos)
+        else:
+            self.image=self.backup_image
         if self.rect.y>=setting.center[1]:
             if self.dx_plus: self.dx+=self.dx_plus*speed*FRAME_SPEED
             if self.dy_plus: self.dy+=self.dy_plus*speed*FRAME_SPEED
 
     def collide_check(self,players):
         re_value=[(pygame.sprite.collide_mask(self,players[i]),i) for i in range(2)]
+        if self.invincible:
+            re_value=[]
+            return re_value
         for row in re_value:
-            if self.invincible and row[0]:
+            if row[0]:
                 pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
         return re_value
 
@@ -265,6 +267,10 @@ class InGame(Screen):
             self.level.blit(self.surface)
             background.blit(self.surface,(0,0))
 
+class PauseScreen(Screen):
+    def __init__(self):
+        super().__init__()
+
 class Level:
     def __init__(self,name):
         path="assets/level/"+name
@@ -280,15 +286,15 @@ class Level:
         for o in self.obs_group: o.update()
         if self.obs_group.sprites()[-1].rect.top>setting.size[1]:
             self.rewind=True
-            for o in self.obs_group: o.invincible=False
+            for o in self.obs_group: o.invincible=True
         if self.rewind:
             for o in self.obs_group: o.update(-20)
             if self.obs_group.sprites()[0].rect.y<=self.df.loc[0].to_dict()["y"]:
                 for o in self.obs_group:
                     o.rect.topleft=o.x,o.y
                     o.rect.size=o.w,o.h
-                for o in self.obs_group: o.invincible=True
                 self.rewind=False
+                for o in self.obs_group: o.invincible=False
 
     def collide_check(self,players):
         re_value=[]
@@ -297,6 +303,9 @@ class Level:
             for i in check:
                 if i[0] and (re_value==[] or i[1]!=re_value[0][1]):
                     re_value.append(i)
+        if re_value:
+            self.rewind=True
+            for o in self.obs_group: o.invincible=True
         return re_value if len(re_value)!=1 else re_value[0]
 
     def blit(self,background):

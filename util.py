@@ -29,10 +29,10 @@ def return_image(path,size=False):
     else: return image
 
 def draw_player(player,background,screen):
-    screen=setting.player_center["level"] if screen=="level" else setting.player_center["menu"]
-    draw_player_circle(background,center=screen)
+    pos=setting.player_center[screen]
+    draw_player_circle(background,center=pos)
     for p in player:
-        p.center=screen
+        p.center=pos
         p.blit(background)
 
 
