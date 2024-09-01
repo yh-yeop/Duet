@@ -3,6 +3,7 @@ from setting import *
 from objects import *
 from util import *
 
+
 class Duet(Setting):
     def __init__(self):
         super().__init__()

@@ -10,3 +10,4 @@ class Setting:
         self.player_center={"ingame":(self.center[0],self.size[1]//3*2),
                             "menu":self.center}
         self.SPEED_CONSTANT=1/(1000//120)*(1000//self.frame)
+        

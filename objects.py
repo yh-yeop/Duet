@@ -7,7 +7,6 @@ import numpy as np
 setting=Setting()
 FRAME_SPEED=setting.SPEED_CONSTANT
 
-
 class Objects(pygame.sprite.Sprite):
     box=False
     def __init__(self,pos=Vector2(0,0),image=pygame.Surface((20,20)),angle=0):

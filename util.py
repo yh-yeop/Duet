@@ -2,7 +2,6 @@ import pygame
 from setting import Setting
 setting=Setting()
 
-
 def draw_player_circle(background,r=setting.center[0]//5*2,alpha=128,center=setting.player_center["menu"]):
     circle_surface=pygame.Surface(setting.size,pygame.SRCALPHA)
     pygame.draw.circle(circle_surface,(200,200,200,alpha),center,r,1)
