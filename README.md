@@ -26,3 +26,18 @@
 ##
 
 그 외
+
+
+
+
+prev pause : 230 220
+
+on pause : if문 중지
+
+not pause : prev pause=not pause-prev pause
+
+or
+
+pause 아닐때 카운트를 감소시키는 방식
+
+120번=1초
