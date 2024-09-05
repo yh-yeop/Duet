@@ -210,15 +210,9 @@ class Menu(Screen):
         if self.start and self.is_screen:
             if self.text[1][1]!=25:
                 self.text[1][1]=min(self.text[1][1]+11*FRAME_SPEED,25)
-                if self.log_print and self.text[1][1]==25:
-                    with open("Duet/menu_log.txt","at") as f:
-                        print("텍스트 나왔음",pygame.time.get_ticks(),file=f)
             for button in self.buttons:
                 if button.rect.y!=setting.size[1]-self.button_size-20:
                     button.rect.y=max(button.rect.y-5,setting.size[1]-self.button_size-20)
-                    if self.log_print and button.rect.y==setting.size[1]-self.button_size-20:
-                        with open("Duet/menu_log.txt","at") as f:
-                            print("버튼 나왔음",pygame.time.get_ticks(),file=f)
 
     def button_check(self,mouse,click):
         for button in self.buttons:

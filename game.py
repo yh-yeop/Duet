@@ -16,7 +16,8 @@ class Duet(Setting):
         self.clock=pygame.time.Clock()
         self.direction=1
         self.now=pygame.time.get_ticks()
-        self.time_count={"menu_after_intro":0}
+        self.time_count={"menu_after_intro":0,
+                         "rewind":0}
         self.pause=False
         
         self.intro=Intro()
@@ -27,7 +28,6 @@ class Duet(Setting):
 
         self.mouse_hitbox=Objects(pygame.mouse.get_pos(),pygame.Surface((1,1)))
 
-        # self.menu.log_print=True
         self.check={"menu":None}
         
 
@@ -99,6 +99,7 @@ class Duet(Setting):
                 collide_check=self.in_game.collide_check(self.player.sprites())
                 if collide_check:
                     print("충돌함")
+                    self.time_count["rewind"]=pygame.time.get_ticks()
 
             if not self.check["menu"]: self.check["menu"]=self.menu.button_check(self.mouse_hitbox,False)
 
