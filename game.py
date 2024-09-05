@@ -139,18 +139,22 @@ class Duet(Setting):
         
 
     def draw(self):
-        if not self.pause:
-            self.background.fill(self.black)
+        self.background.fill(self.black)
 
-            if self.in_game.is_screen:
-                draw_player(self.player,self.in_game.surface,"ingame")
-
-            else:
-                draw_player(self.player,self.menu.surface,"menu")
+        for screen in self.screens:
+            if screen.is_screen:
+                screen.surface.fill(self.black)
 
 
-            for screen in self.screens:
-                screen.blit(self.background)
+        if self.in_game.is_screen:
+            draw_player(self.player,self.in_game.surface,"ingame")
+
+        else:
+            draw_player(self.player,self.menu.surface,"menu")
+
+
+        for screen in self.screens:
+            screen.blit(self.background)
         
         pygame.display.flip()   
         self.clock.tick(self.frame)

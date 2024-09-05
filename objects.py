@@ -182,7 +182,7 @@ class Intro(Screen):
 
     def blit(self,background):
         if self.is_screen:
-            self.surface.fill((0,0,0,0))
+            self.surface.fill(setting.black)
             pygame.draw.circle(self.surface,setting.white,setting.player_center["menu"],self.r)
             for text in self.texts:
                 self.surface.blit(*text)
@@ -206,7 +206,7 @@ class Menu(Screen):
         self.settingmenu=SettingMenu()
     
     def update(self):
-        self.surface.fill((0,0,0,0))
+        self.surface.fill(setting.black)
         if self.start and self.is_screen:
             if self.text[1][1]!=25:
                 self.text[1][1]=min(self.text[1][1]+11*FRAME_SPEED,25)
@@ -231,7 +231,7 @@ class Menu(Screen):
     def blit(self,background):
         if self.is_screen:
             self.surface.blit(*self.text)
-            for b in self.buttons: b.blit(background)
+            for b in self.buttons: b.blit(self.surface)
             background.blit(self.surface,self.pos)
 
 class PlayMenu(Screen):
@@ -255,7 +255,7 @@ class InGame(Screen):
 
     def update(self):
         if self.is_screen:
-            self.surface.fill((0,0,0,0))
+            self.surface.fill(setting.black)
             self.level.update()
 
     
@@ -283,10 +283,6 @@ class Level:
         self.rewind=False
 
     def update(self):
-        for o in self.obs_group: o.update()
-        if self.obs_group.sprites()[-1].rect.top>setting.size[1]:
-            self.rewind=True
-            for o in self.obs_group: o.invincible=True
         if self.rewind:
             for o in self.obs_group: o.update(-20)
             if self.obs_group.sprites()[0].rect.y<=self.df.loc[0].to_dict()["y"]:
@@ -295,6 +291,13 @@ class Level:
                     o.rect.size=o.w,o.h
                 self.rewind=False
                 for o in self.obs_group: o.invincible=False
+        else:
+            for o in self.obs_group: o.update()
+
+        if self.obs_group.sprites()[-1].rect.top>setting.size[1]:
+            self.rewind=True
+            for o in self.obs_group: o.invincible=True
+            
 
     def collide_check(self,players):
         re_value=[]
@@ -303,16 +306,16 @@ class Level:
             for i in check:
                 if i[0] and (re_value==[] or i[1]!=re_value[0][1]):
                     re_value.append(i)
-        if re_value:
-            self.rewind=True
-            for o in self.obs_group: o.invincible=True
+        # if re_value:
+        #     self.rewind=True
+        #     for o in self.obs_group: o.invincible=True
         return re_value if len(re_value)!=1 else re_value[0]
 
     def blit(self,background):
         for obs in self.obs_group:
             background.blit(obs.image,obs.rect)
             if obs.box:
-                pygame.draw.rect(background,(255,255,255),obs.rect,1)
+                pygame.draw.rect(background,setting.white,obs.rect,1)
 
 
 
