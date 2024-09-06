@@ -120,6 +120,7 @@ class Obstacle(Objects):
                     self.backup_image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
                     self.backup_image=pygame.transform.rotozoom(self.backup_image,self.angle,1)
+                    print("SBASBDFAS")
 
                 else:
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
@@ -289,14 +290,17 @@ class Level:
                 for o in self.obs_group:
                     o.rect.topleft=o.x,o.y
                     o.rect.size=o.w,o.h
-                self.rewind=False
-                for o in self.obs_group: o.invincible=False
+                self.rewind_change(False)
         else:
             for o in self.obs_group: o.update()
 
         if self.obs_group.sprites()[-1].rect.top>setting.size[1]:
-            self.rewind=True
-            for o in self.obs_group: o.invincible=True
+            self.rewind_change()
+
+
+    def rewind_change(self,flag=True):
+        self.rewind=flag
+        for o in self.obs_group: o.invincible=flag
             
 
     def collide_check(self,players):

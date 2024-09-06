@@ -47,16 +47,20 @@ class Duet(Setting):
         if not self.pause:
             if self.time_count["menu_after_intro"]:
                 self.time_count["menu_after_intro"]-=1
-                if self.now-self.time_count["menu_after_intro"]<=0:
+                if self.time_count["menu_after_intro"]<=0:
                     self.menu.start=True
-                elif self.now-self.time_count["menu_after_intro"]<=60:
+                elif self.time_count["menu_after_intro"]<=60:
                     for p in self.player: p.speed=1.7
+        if self.time_count["rewind"]:
+            self.time_count["rewind"]-=1
+            if self.time_count["rewind"]<=0:
+                self.pause=False
+                self.in_game.level.rewind_change()
         if not self.intro.is_screen:
             self.mouse_hitbox.rect.center=pygame.mouse.get_pos()
         
 
     def inputs(self):
-
         keys=pygame.key.get_pressed()
         for event in pygame.event.get():
             if event.type==pygame.QUIT or \
@@ -133,15 +137,15 @@ class Duet(Setting):
                 self.direction=1
             self.player.update(self.direction)
         else:
-            print("일시정지")
+            pass
 
 
     def collide_check(self):
-        if self.in_game.is_screen:
+        if not self.pause and self.in_game.is_screen:
             check=self.in_game.collide_check(self.player.sprites())
             if check:
-                print("충돌함")
                 self.time_count["rewind"]=84
+                self.pause=True
 
 
         
