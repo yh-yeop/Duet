@@ -23,7 +23,7 @@ class Duet(Setting):
         self.intro=Intro()
         self.menu=Menu()
         self.in_game=InGame()
-        self.in_game.level=Level("test_level_3")
+        self.in_game.level=Level("test_level_2")
         self.screens=[self.intro,self.menu,self.in_game]
 
         self.mouse_hitbox=Objects(pygame.mouse.get_pos(),pygame.Surface((1,1)))
@@ -37,21 +37,25 @@ class Duet(Setting):
 
     def mainloop(self):
         while True:
+            self.setting()
             self.inputs()
             self.move()
+            self.collide_check()
             self.draw()
     
-    def inputs(self):        
-        self.now=pygame.time.get_ticks()
-        if self.time_count["menu_after_intro"]:
-            if self.now-self.time_count["menu_after_intro"]>=1500:
-                self.menu.start=True
-            elif self.now-self.time_count["menu_after_intro"]>=1000:
-                for p in self.player: p.speed=1.7
-
+    def setting(self):
+        if not self.pause:
+            if self.time_count["menu_after_intro"]:
+                self.time_count["menu_after_intro"]-=1
+                if self.now-self.time_count["menu_after_intro"]<=0:
+                    self.menu.start=True
+                elif self.now-self.time_count["menu_after_intro"]<=60:
+                    for p in self.player: p.speed=1.7
         if not self.intro.is_screen:
-            m_pos=pygame.mouse.get_pos()
-            self.mouse_hitbox.rect.center=m_pos
+            self.mouse_hitbox.rect.center=pygame.mouse.get_pos()
+        
+
+    def inputs(self):
 
         keys=pygame.key.get_pressed()
         for event in pygame.event.get():
@@ -95,11 +99,6 @@ class Duet(Setting):
     def move(self):
         if not self.pause:
             for screen in self.screens: screen.update()
-            if self.in_game.is_screen:
-                collide_check=self.in_game.collide_check(self.player.sprites())
-                if collide_check:
-                    print("충돌함")
-                    self.time_count["rewind"]=pygame.time.get_ticks()
 
             if not self.check["menu"]: self.check["menu"]=self.menu.button_check(self.mouse_hitbox,False)
 
@@ -116,7 +115,7 @@ class Duet(Setting):
                 for p in self.player:
                     p.r=100
                     p.distance=0
-                self.time_count["menu_after_intro"]=self.now
+                self.time_count["menu_after_intro"]=180
                 self.screens=screen_change(self.screens,self.menu)
 
             if self.player.sprites()[0].r!=Player.r:
@@ -135,6 +134,14 @@ class Duet(Setting):
             self.player.update(self.direction)
         else:
             print("일시정지")
+
+
+    def collide_check(self):
+        if self.in_game.is_screen:
+            check=self.in_game.collide_check(self.player.sprites())
+            if check:
+                print("충돌함")
+                self.time_count["rewind"]=84
 
 
         
