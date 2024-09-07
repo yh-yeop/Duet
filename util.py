@@ -13,7 +13,8 @@ def return_font(size,name="malgungothic",bold=False,italic=False,isfile=False):
         try:
             return pygame.font.Font(name,size)
         except FileNotFoundError:
-            return pygame.font.Font("Duet/"+name,size)
+            try: return pygame.font.Font("Duet/"+name,size)
+            except FileNotFoundError: return pygame.font.Font("Duet-main/"+name,size)
     return pygame.font.SysFont(name,size,bold,italic)
 
 def return_text(font,text="test",antialias=True,color=setting.white):
@@ -24,7 +25,8 @@ def return_image(path,size=False):
     try:
         image=pygame.image.load(path)
     except FileNotFoundError:
-        image=pygame.image.load("Duet/"+path)
+        try: image=pygame.image.load("Duet/"+path)
+        except FileNotFoundError: image=pygame.image.load("Duet-main/"+path)
     if size: return pygame.transform.scale(image,size)
     else: return image
 

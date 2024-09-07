@@ -187,9 +187,9 @@ class Intro(Screen):
 
             else:
                 self.alpha=max(self.alpha-4,0)
-                for i in np.arange(0,len(self.texts),2): self.texts[i][0].set_alpha(self.alpha)
+                for i in range(0,len(self.texts),2): self.texts[i][0].set_alpha(self.alpha)
 
-            for i in np.arange(0,len(self.texts),2): self.texts[i+1][0].set_alpha(self.alpha)
+            for i in range(0,len(self.texts),2): self.texts[i+1][0].set_alpha(self.alpha)
 
     def blit(self,background):
         if self.is_screen:
@@ -282,7 +282,8 @@ class Level:
         try:
             self.df=pd.read_csv(path,encoding="cp949")
         except FileNotFoundError:
-            self.df=pd.read_csv("Duet/"+path,encoding="cp949")
+            try: self.df=pd.read_csv("Duet/"+path,encoding="cp949")
+            except FileNotFoundError: self.df=pd.read_csv("Duet-main/"+path,encoding="cp949")
         self.max_obs=len(self.df)
         self.obs_group=pygame.sprite.Group(*[Obstacle(*self.df.loc[i].to_dict().values()) for i in range(self.max_obs)])
         self.rewind=False
@@ -323,7 +324,7 @@ class Level:
         for obs in self.obs_group:
             background.blit(obs.image,obs.rect)
             if obs.box:
-                pygame.draw.rect(background,setting.white,obs.rect,1)
+                pygame.draw.rect(background,(255,0,0),obs.rect,1)
 
 
 
