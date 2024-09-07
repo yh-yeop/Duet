@@ -5,7 +5,10 @@ from util import *
 import pandas as pd
 import numpy as np
 setting=Setting()
-FRAME_SPEED=setting.SPEED_CONSTANT
+FRAME_SPEED=(1000//setting.frame)/(1000//120)
+def get_dt(dt):
+    global FRAME_SPEED
+    FRAME_SPEED=dt/(1000//120)
 
 class Objects(pygame.sprite.Sprite):
     box=False
@@ -15,6 +18,8 @@ class Objects(pygame.sprite.Sprite):
         self.rect=self.image.get_rect()
         self.rect.topleft=pos
         self.angle=angle
+        # self.mask=pygame.mask.from_surface(self.image)
+        # self.mask=self.image.get_masks()
 
 
 class Player(Objects):
@@ -120,8 +125,7 @@ class Obstacle(Objects):
                     self.backup_image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
                     self.backup_image=pygame.transform.rotozoom(self.backup_image,self.angle,1)
-                    print("SBASBDFAS")
-
+                    print("충돌함")
                 else:
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
         return re_value
@@ -274,11 +278,11 @@ class PauseScreen(Screen):
 
 class Level:
     def __init__(self,name):
-        path="assets/level/"+name
+        path="assets/level/"+name+".csv"
         try:
             self.df=pd.read_csv(path,encoding="cp949")
         except FileNotFoundError:
-            self.df=pd.read_csv("Duet/"+path+".csv",encoding="cp949")
+            self.df=pd.read_csv("Duet/"+path,encoding="cp949")
         self.max_obs=len(self.df)
         self.obs_group=pygame.sprite.Group(*[Obstacle(*self.df.loc[i].to_dict().values()) for i in range(self.max_obs)])
         self.rewind=False

@@ -30,6 +30,7 @@ class Duet(Setting):
 
         self.check={"menu":None}
         
+        self.play=True
 
     def init_pygame(self):
         pygame.init()
@@ -39,6 +40,8 @@ class Duet(Setting):
         while True:
             self.setting()
             self.inputs()
+            if not self.play:
+                return
             self.move()
             self.collide_check()
             self.draw()
@@ -58,6 +61,9 @@ class Duet(Setting):
                 self.in_game.level.rewind_change()
         if not self.intro.is_screen:
             self.mouse_hitbox.rect.center=pygame.mouse.get_pos()
+        dt=self.clock.tick(self.frame)
+        get_dt(dt)
+        print(f"{1000/dt:.2f}")
         
 
     def inputs(self):
@@ -65,8 +71,7 @@ class Duet(Setting):
         for event in pygame.event.get():
             if event.type==pygame.QUIT or \
             (not self.in_game.is_screen and event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):
-                pygame.quit()
-                quit()
+                self.play=False
             if event.type==pygame.KEYDOWN:
                 if self.in_game.is_screen and not self.pause:
                     if event.key==pygame.K_LEFT:
@@ -98,8 +103,6 @@ class Duet(Setting):
                     if self.menu.is_screen:
                         self.check["menu"]=self.menu.button_check(self.mouse_hitbox,True)
 
-
-
     def move(self):
         if not self.pause:
             for screen in self.screens: screen.update()
@@ -113,6 +116,7 @@ class Duet(Setting):
                 self.player.sprites()[1].angle=0
                 for p in self.player: p.speed=2.4 # 2.4
                 Particle.speed=0.7
+                self.in_game.level=Level("test_level_2")
                 screen_change(self.screens,self.in_game)
 
             if self.intro.is_intro_done():
@@ -169,8 +173,8 @@ class Duet(Setting):
             screen.blit(self.background)
         
         pygame.display.flip()   
-        self.clock.tick(self.frame)
 
 if __name__=="__main__":
     duet=Duet()
     duet.mainloop()
+    pygame.quit()
