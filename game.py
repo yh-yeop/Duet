@@ -19,11 +19,12 @@ class Duet(Setting):
         self.time_count={"menu_after_intro":0,
                          "rewind":0}
         self.pause=False
+        self.rewind_pause=False
         
         self.intro=Intro()
         self.menu=Menu()
         self.in_game=InGame()
-        self.in_game.level=Level("test_level_2")
+        self.in_game.level=Level("test_level_3")
         self.screens=[self.intro,self.menu,self.in_game]
 
         self.mouse_hitbox=Objects(pygame.mouse.get_pos(),pygame.Surface((1,1)))
@@ -48,23 +49,24 @@ class Duet(Setting):
     
     def setting(self):
         if not self.pause:
-            if self.time_count["menu_after_intro"]:
-                self.time_count["menu_after_intro"]-=1
-                if self.time_count["menu_after_intro"]<=0:
-                    self.menu.start=True
-                elif self.time_count["menu_after_intro"]<=60:
-                    for p in self.player: p.speed=1.7
-        if self.time_count["rewind"]:
-            self.time_count["rewind"]-=1
-            if self.time_count["rewind"]<=0:
-                self.pause=False
-                self.in_game.level.rewind_change()
-        if not self.intro.is_screen:
-            self.mouse_hitbox.rect.center=pygame.mouse.get_pos()
-        dt=self.clock.tick(self.frame)
-        get_dt(dt)
-        print(f"{1000/dt:.2f}")
-        
+            if not self.rewind_pause:
+                if self.time_count["menu_after_intro"]:
+                    self.time_count["menu_after_intro"]-=1
+                    if self.time_count["menu_after_intro"]<=0:
+                        self.menu.start=True
+                    elif self.time_count["menu_after_intro"]<=60:
+                        for p in self.player: p.speed=1.7
+
+            if self.time_count["rewind"]:
+                self.time_count["rewind"]-=1
+                if self.time_count["rewind"]<=0:
+                    self.pause=False
+                    self.in_game.level.rewind_change()
+            if not self.intro.is_screen:
+                self.mouse_hitbox.rect.center=pygame.mouse.get_pos()
+            dt=self.clock.tick(self.frame)
+            get_dt(dt)
+            # print(f"{1000/dt:.2f}")
 
     def inputs(self):
         keys=pygame.key.get_pressed()

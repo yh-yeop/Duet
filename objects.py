@@ -122,9 +122,9 @@ class Obstacle(Objects):
         for row in re_value:
             if row[0]:
                 if self.angle:
-                    self.backup_image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
+                    # self.backup_image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
-                    self.backup_image=pygame.transform.rotozoom(self.backup_image,self.angle,1)
+                    # self.backup_image=pygame.transform.rotozoom(self.backup_image,self.angle,1)
                     print("충돌함")
                 else:
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
