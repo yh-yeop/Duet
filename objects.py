@@ -7,7 +7,7 @@ import numpy as np
 import math
 setting=Setting()
 FRAME_SPEED=(1000//setting.frame)/(1000//120)
-def set_dt(dt):
+def set_speed(dt):
     global FRAME_SPEED
     FRAME_SPEED=dt/(1000//120)
 
@@ -19,8 +19,6 @@ class Objects(pygame.sprite.Sprite):
         self.rect=self.image.get_rect()
         self.rect.topleft=pos
         self.angle=angle
-        # self.mask=pygame.mask.from_surface(self.image)
-        # self.mask=self.image.get_masks()
 
 
 class Player(Objects):
@@ -42,7 +40,7 @@ class Player(Objects):
     def update(self,angle_plus):
         self.angle+=angle_plus*self.speed*FRAME_SPEED
         self.rect.center=self.center+Vector2(self.distance,0).rotate(self.angle)
-        self.particle_group.add(Particle(self.color,self.rect.topleft,self.angle))
+        self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,self.angle))
         self.particle_group.update()
         for p in self.particle_group:
             if (not p.image.get_alpha()) or (not p.size):
@@ -62,35 +60,47 @@ class Player(Objects):
 
 class Particle(Objects):
     speed=0
-    def __init__(self,color,pos=Vector2(0,0),angle=0):
-        self.image=pygame.Surface((17,10),pygame.SRCALPHA)
+    def __init__(self,color,size,pos=Vector2(0,0),angle=0):
+        self.image=pygame.Surface(size,pygame.SRCALPHA)
         self.color=color
         self.image.fill(self.color)
         self.alpha=128
-        # self.image.set_alpha(self.alpha)
-        super().__init__(pos,self.image,angle)
-        self.image=pygame.transform.rotozoom(self.image,self.angle,1)
-        self.blit_image=self.image.copy()
         self.size=1
+        super().__init__(pos,self.image,angle)
+        self.blit_image=self.image.copy()
 
     def update(self):
         self.size=max(self.size-0.01*FRAME_SPEED,0)
         self.alpha=max(self.alpha-2.5*FRAME_SPEED,0)
-        self.rect.y+=self.speed*FRAME_SPEED
         self.blit_image=pygame.transform.rotozoom(self.image,self.angle,self.size)
-        self.blit_image.set_alpha(self.alpha)
 
     def blit(self,background):
         blit_pos=Vector2(*self.rect.topleft)-Vector2(*self.blit_image.get_size())//2
         background.blit(self.blit_image,blit_pos)
 
 class PlayerParticle(Particle):
-    def __init__(self, color, pos=Vector2(0,0), angle=0):
-        super().__init__(color, pos, angle)
+    def __init__(self, color, pos=Vector2(0,0),angle=0):
+        super().__init__(color,(17,10),pos)
+        self.image=pygame.transform.rotozoom(self.image,self.angle,1)
+
+    def update(self):
+        super().update()
+        self.blit_image.set_alpha(self.alpha)
+        self.rect.y+=self.speed*FRAME_SPEED
+
 
 class DeathParticle(Particle):
-    def __init__(self, color, pos=Vector2(0, 0), angle=0):
-        super().__init__(color, pos, angle)
+    def __init__(self, color,pos=Vector2(0, 0)):
+        super().__init__(color,(10,10),pos)
+        self.dx=(np.random.randint(0,1000)-500)/1000
+        """
+            -500~500 / 1000 = -0.5~0.5 (좀더 많은 갯수)
+            -50~50 / 100 = -0.5~0.5
+        """
+
+    def update(self):
+        super().update()
+
 
 class Obstacle(Objects):
     def __init__(self,*args):
@@ -130,6 +140,7 @@ class Obstacle(Objects):
             return re_value
         for row in re_value:
             if row[0]:
+                print("충돌함++++++++++++++++++++++++++++++++++++++++++++++")
                 if self.angle:
                     angle_rad=math.radians(self.angle)
                     original_x = row[0][0]*math.cos(-angle_rad) - row[0][1]*math.sin(-angle_rad)
@@ -137,7 +148,6 @@ class Obstacle(Objects):
                     blit_pos=Vector2(original_x,original_y)-Vector2(2.5,2.5)
                     
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*blit_pos,5,5))
-                    print("충돌함")
                 else:
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
         return re_value
@@ -250,9 +260,9 @@ class MainMenu(Screen):
     def button_check(self,mouse,click):
         for button in self.buttons:
             if button==self.buttons[0] and all(button.mouse_check(mouse,click)):
-                print("설정 누름")
+                print("설정 누름***********************************************")
             elif button==self.buttons[1] and all(button.mouse_check(mouse,click)):
-                print("플레이 누름")
+                print("플레이 누름@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
         return [button.mouse_check(mouse,click) for button in self.buttons]
         
     def blit(self,background):

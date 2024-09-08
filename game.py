@@ -19,6 +19,7 @@ class Duet(Setting):
         self.time_count={"menu_after_intro":0,
                          "rewind":0}
         self.pause=False
+        self.rewind_pause=False
         
         self.intro=Intro()
         self.menu=MainMenu()
@@ -53,17 +54,19 @@ class Duet(Setting):
                     self.menu.start=True
                 elif self.time_count["menu_after_intro"]<=60:
                     for p in self.player: p.speed=1.7
-        if self.time_count["rewind"]:
-            self.time_count["rewind"]-=1
-            if self.time_count["rewind"]<=0:
-                self.pause=False
-                self.in_game.level.rewind_change()
+            if self.time_count["rewind"]:
+                self.time_count["rewind"]-=1
+                if self.time_count["rewind"]<=0:
+                    self.rewind_pause=False
+                    self.in_game.level.rewind_change()
+        else:
+            print("일시정지--------------------------------")
         if not self.intro.is_screen:
             self.mouse_hitbox.rect.center=pygame.mouse.get_pos()
         dt=self.clock.tick(self.frame)
-        set_dt(dt)
+        set_speed(dt)
         fps=1000/dt
-        print(f"FPS: 정상({fps:.2f})" if fps>90 else f"FPS: 비정상({fps:.2f})")
+        # print(f"FPS: 정상({fps:.2f})" if fps>90 else f"FPS: 비정상({fps:.2f})")
         
 
     def inputs(self):
@@ -73,7 +76,7 @@ class Duet(Setting):
             (not self.in_game.is_screen and event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):
                 self.play=False
             if event.type==pygame.KEYDOWN:
-                if self.in_game.is_screen and not self.pause:
+                if self.in_game.is_screen and (not self.pause and not self.rewind_pause):
                     if event.key==pygame.K_LEFT:
                         self.direction=-1
                     if event.key==pygame.K_RIGHT:
@@ -107,7 +110,7 @@ class Duet(Setting):
                         self.check["menu"]=self.menu.button_check(self.mouse_hitbox,True)
 
     def move(self):
-        if not self.pause:
+        if (not self.pause and not self.rewind_pause):
             for screen in self.screens: screen.update()
 
             if not self.check["menu"]: self.check["menu"]=self.menu.button_check(self.mouse_hitbox,False)
@@ -148,11 +151,11 @@ class Duet(Setting):
 
 
     def collide_check(self):
-        if not self.pause and self.in_game.is_screen:
+        if (not self.pause and not self.rewind_pause) and self.in_game.is_screen:
             check=self.in_game.collide_check(self.player.sprites())
             if check:
                 self.time_count["rewind"]=84
-                self.pause=True
+                self.rewind_pause=True
 
 
         
