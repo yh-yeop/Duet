@@ -65,7 +65,7 @@ class Duet(Setting):
             self.mouse_hitbox.rect.center=pygame.mouse.get_pos()
         dt=self.clock.tick(self.frame)
         set_speed(dt)
-        fps=1000/dt
+        # fps=1000/dt
         # print(f"FPS: 정상({fps:.2f})" if fps>90 else f"FPS: 비정상({fps:.2f})")
         
 
@@ -73,8 +73,9 @@ class Duet(Setting):
         keys=pygame.key.get_pressed()
         for event in pygame.event.get():
             if event.type==pygame.QUIT or \
-            (not self.in_game.is_screen and event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):
+            (not self.in_game.is_screen and not self.intro.is_screen and event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):
                 self.play=False
+                return
             if event.type==pygame.KEYDOWN:
                 if self.in_game.is_screen and (not self.pause and not self.rewind_pause):
                     if event.key==pygame.K_LEFT:
@@ -83,6 +84,9 @@ class Duet(Setting):
                         self.direction=1
                     if event.key==pygame.K_ESCAPE:
                         screen_change(self.screens,self.menu)
+                if self.intro.is_screen:
+                    if event.key==pygame.K_ESCAPE:
+                        self.intro.skip=True
 
                 if event.key==pygame.K_0:
                     self.player.sprites()[0].angle=180
@@ -129,7 +133,7 @@ class Duet(Setting):
                 for p in self.player:
                     p.r=100
                     p.distance=0
-                self.time_count["menu_after_intro"]=180
+                self.time_count["menu_after_intro"]=180 if not self.intro.skip else 1
                 self.screens=screen_change(self.screens,self.menu)
 
             if self.player.sprites()[0].r!=Player.r:

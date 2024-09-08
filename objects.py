@@ -142,11 +142,12 @@ class Obstacle(Objects):
             if row[0]:
                 print("충돌함++++++++++++++++++++++++++++++++++++++++++++++")
                 if self.angle:
+                    pygame.draw.rect(self.image,players[row[1]].color,(*row[0],5,5))
+
                     angle_rad=math.radians(self.angle)
                     original_x = row[0][0]*math.cos(-angle_rad) - row[0][1]*math.sin(-angle_rad)
                     original_y = row[0][0]*math.sin(-angle_rad) + row[0][1]*math.cos(-angle_rad)
                     blit_pos=Vector2(original_x,original_y)-Vector2(2.5,2.5)
-                    
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*blit_pos,5,5))
                 else:
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
@@ -187,6 +188,7 @@ class Intro(Screen):
         super().__init__()
         self.is_screen=True
         self.alpha=30
+        self.skip=False
         self.r=setting.size[1]+200
         self.texts=[(return_text(return_font(30,self.kor_font),"제작",color=setting.black),[setting.center[0],setting.center[1]-50]),
                     (return_text(return_font(30,self.eng_font,isfile=True),"Yoon Ho Yeop",color=setting.black),list(setting.center)),
@@ -197,7 +199,6 @@ class Intro(Screen):
 
     def is_intro_done(self):
         if self.is_screen and self.r==100:
-
             return True
         return False
     
@@ -211,6 +212,8 @@ class Intro(Screen):
                 for i in range(0,len(self.texts),2): self.texts[i][0].set_alpha(self.alpha)
 
             for i in range(0,len(self.texts),2): self.texts[i+1][0].set_alpha(self.alpha)
+            if self.skip:
+                self.r=100
 
     def blit(self,background):
         if self.is_screen:
