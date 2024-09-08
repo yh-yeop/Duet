@@ -21,7 +21,7 @@ class Duet(Setting):
         self.pause=False
         
         self.intro=Intro()
-        self.menu=Menu()
+        self.menu=MainMenu()
         self.in_game=InGame()
         self.screens=[self.intro,self.menu,self.in_game]
 
@@ -61,8 +61,9 @@ class Duet(Setting):
         if not self.intro.is_screen:
             self.mouse_hitbox.rect.center=pygame.mouse.get_pos()
         dt=self.clock.tick(self.frame)
-        get_dt(dt)
-        # print(f"{1000/dt:.2f}")
+        set_dt(dt)
+        fps=1000/dt
+        print(f"FPS: 정상({fps:.2f})" if fps>90 else f"FPS: 비정상({fps:.2f})")
         
 
     def inputs(self):

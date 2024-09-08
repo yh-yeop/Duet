@@ -4,9 +4,10 @@ from pygame.math import Vector2
 from util import *
 import pandas as pd
 import numpy as np
+import math
 setting=Setting()
 FRAME_SPEED=(1000//setting.frame)/(1000//120)
-def get_dt(dt):
+def set_dt(dt):
     global FRAME_SPEED
     FRAME_SPEED=dt/(1000//120)
 
@@ -83,6 +84,14 @@ class Particle(Objects):
         blit_pos=Vector2(*self.rect.topleft)-Vector2(*self.blit_image.get_size())//2
         background.blit(self.blit_image,blit_pos)
 
+class PlayerParticle(Particle):
+    def __init__(self, color, pos=Vector2(0,0), angle=0):
+        super().__init__(color, pos, angle)
+
+class DeathParticle(Particle):
+    def __init__(self, color, pos=Vector2(0, 0)):
+        super().__init__(color, pos)
+
 class Obstacle(Objects):
     def __init__(self,*args):
         """shape: [rect,special]
@@ -122,9 +131,12 @@ class Obstacle(Objects):
         for row in re_value:
             if row[0]:
                 if self.angle:
-                    # self.backup_image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
-                    pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
-                    # self.backup_image=pygame.transform.rotozoom(self.backup_image,self.angle,1)
+                    angle_rad=math.radians(self.angle)
+                    original_x = row[0][0]*math.cos(-angle_rad) - row[0][1]*math.sin(-angle_rad)
+                    original_y = row[0][0]*math.sin(-angle_rad) + row[0][1]*math.cos(-angle_rad)
+                    blit_pos=Vector2(original_x,original_y)-Vector2(2.5,2.5)
+                    
+                    pygame.draw.rect(self.backup_image,players[row[1]].color,(*blit_pos,5,5))
                     print("충돌함")
                 else:
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
@@ -146,13 +158,12 @@ class Button(Objects):
 
 
 class Screen:
-    name="Screen"
     def __init__(self,size=setting.size):
         self.surface=pygame.Surface(size,pygame.SRCALPHA)
-        self.is_screen=True
         self.eng_font="Montserrat/static/Montserrat-Thin.ttf"
         self.kor_font="malgungothic"
         self.pos=(0,0)
+        self.is_screen=False
 
     def update(self,*args):
         pass
@@ -162,9 +173,9 @@ class Screen:
 
 
 class Intro(Screen):
-    name="Intro"
     def __init__(self):
         super().__init__()
+        self.is_screen=True
         self.alpha=30
         self.r=setting.size[1]+200
         self.texts=[(return_text(return_font(30,self.kor_font),"제작",color=setting.black),[setting.center[0],setting.center[1]-50]),
@@ -176,7 +187,7 @@ class Intro(Screen):
 
     def is_intro_done(self):
         if self.is_screen and self.r==100:
-            self.is_screen=False
+
             return True
         return False
     
@@ -199,11 +210,22 @@ class Intro(Screen):
                 self.surface.blit(*text)
             background.blit(self.surface,(0,0))
     
+
 class Menu(Screen):
-    name="Menu"
+    def __init__(self, size=Vector2(*setting.size)+Vector2(2*setting.size[0]//1.3,0)):
+        super().__init__(size)
+        self.screens=[SettingMenu(),MainMenu(),PlayMenu()]
+        
+    def update(self):
+        for s in self.screens: s.update()
+        
+
+    def blit(self):
+        for s in self.screens: s.blit(self.surface)
+
+class MainMenu(Screen):
     def __init__(self):
         super().__init__()
-        self.is_screen=False
         self.start=False
         self.text=[return_text(return_font(120,self.eng_font,isfile=True),"DUET"),Vector2(setting.center[0],0)]
         self.text[1]-=Vector2(*self.text[0].get_size())//2
@@ -243,19 +265,15 @@ class PlayMenu(Screen):
     def __init__(self):
         super().__init__((setting.size[0]//1.3,setting.size[1]))
         self.pos=[setting.size[0],0]
-        self.is_screen=False
 
 class SettingMenu(Screen):
     def __init__(self):
         super().__init__((setting.size[0]//1.3,setting.size[1]))
         self.pos=[-self.surface.get_size()[0],0]
-        self.is_screen=False
 
 class InGame(Screen):
-    name="InGame"
     def __init__(self):
         super().__init__()
-        self.is_screen=False
         self.level=Level("test_level")
 
     def update(self):
@@ -285,12 +303,18 @@ class Level:
             try: self.df=pd.read_csv("Duet/"+path,encoding="cp949")
             except FileNotFoundError: self.df=pd.read_csv("Duet-main/"+path,encoding="cp949")
         self.max_obs=len(self.df)
-        self.obs_group=pygame.sprite.Group(*[Obstacle(*self.df.loc[i].to_dict().values()) for i in range(self.max_obs)])
+        df_list=[list(self.df.loc[i].to_dict().values()) for i in range(self.max_obs)]
+        for i in range(len(df_list)):
+            for j in range(len(df_list[i])):
+                if str(df_list[i][j])=="nan":
+                    df_list[i][j]=0
+        # self.obs_group=pygame.sprite.Group(*[Obstacle(*self.df.loc[i].to_dict().values()) for i in range(self.max_obs)])
+        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in df_list])
         self.rewind=False
 
-    def update(self):
+    def update(self,rewind_speed=-20):
         if self.rewind:
-            for o in self.obs_group: o.update(-20)
+            for o in self.obs_group: o.update(rewind_speed)
             if self.obs_group.sprites()[0].rect.y<=self.df.loc[0].to_dict()["y"]:
                 for o in self.obs_group:
                     o.rect.topleft=o.x,o.y
