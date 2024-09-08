@@ -89,8 +89,8 @@ class PlayerParticle(Particle):
         super().__init__(color, pos, angle)
 
 class DeathParticle(Particle):
-    def __init__(self, color, pos=Vector2(0, 0)):
-        super().__init__(color, pos)
+    def __init__(self, color, pos=Vector2(0, 0), angle=0):
+        super().__init__(color, pos, angle)
 
 class Obstacle(Objects):
     def __init__(self,*args):
