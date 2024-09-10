@@ -9,3 +9,5 @@ class Setting:
         self.frame=120
         self.player_center={"ingame":(self.center[0],self.size[1]//8*7),
                             "menu":self.center}
+        self.SETTING=0
+        self.PLAY=1

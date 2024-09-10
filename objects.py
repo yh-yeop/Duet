@@ -225,16 +225,28 @@ class Intro(Screen):
     
 
 class Menu(Screen):
-    def __init__(self, size=Vector2(*setting.size)+Vector2(2*setting.size[0]//1.3,0)):
+    def __init__(self, size=Vector2(*setting.size)+Vector2(2*setting.size[0]//1.5,0)):
         super().__init__(size)
         self.screens=[SettingMenu(),MainMenu(),PlayMenu()]
+        for s in self.screens: s.is_screen=True
+        self.pos=[-setting.size[0]//1.5,0]
+        self.direction=0
         
+    def move(self,direction):
+        self.direction=7*direction
+        self.pos[0]+=7*direction
+
     def update(self):
         for s in self.screens: s.update()
         
+        if not self.pos[0] in (-setting.size[0]//1.5,0,setting.size[0]//1.5):
+            pass
 
-    def blit(self):
-        for s in self.screens: s.blit(self.surface)
+    def blit(self,background):
+        if self.is_screen:
+            self.surface.fill(setting.black)
+            for s in self.screens: s.blit(self.surface)
+            background.blit(self.surface,self.pos)
 
 class MainMenu(Screen):
     def __init__(self):
@@ -246,19 +258,16 @@ class MainMenu(Screen):
         self.button_size=60
         self.buttons=[Button(return_image("setting.png",(self.button_size,self.button_size)),[20,setting.size[1]]),
                       Button(return_image("play.png",(self.button_size,self.button_size)),[setting.size[0]-20-self.button_size,setting.size[1]])]
-        self.pos=[0,0]
         self.log_print=False
-        self.playmenu=PlayMenu()
-        self.settingmenu=SettingMenu()
     
     def update(self):
-        self.surface.fill(setting.black)
         if self.start and self.is_screen:
             if self.text[1][1]!=25:
                 self.text[1][1]=min(self.text[1][1]+11*FRAME_SPEED,25)
             for button in self.buttons:
                 if button.rect.y!=setting.size[1]-self.button_size-20:
                     button.rect.y=max(button.rect.y-5,setting.size[1]-self.button_size-20)
+            self.surface.fill(setting.black)
 
     def button_check(self,mouse,click):
         for button in self.buttons:
@@ -272,17 +281,26 @@ class MainMenu(Screen):
         if self.is_screen:
             self.surface.blit(*self.text)
             for b in self.buttons: b.blit(self.surface)
-            background.blit(self.surface,self.pos)
+            background.blit(self.surface,(setting.size[0]//1.5,0))
+            print(self.is_screen)
 
 class PlayMenu(Screen):
     def __init__(self):
-        super().__init__((setting.size[0]//1.3,setting.size[1]))
-        self.pos=[setting.size[0],0]
+        super().__init__((setting.size[0]//1.5,setting.size[1]))
+
+    def blit(self,background):
+        if self.is_screen:
+            self.surface.fill(setting.white)
+            background.blit(self.surface,(setting.size[0]//1.5+setting.size[0],0))
 
 class SettingMenu(Screen):
     def __init__(self):
-        super().__init__((setting.size[0]//1.3,setting.size[1]))
-        self.pos=[-self.surface.get_size()[0],0]
+        super().__init__((setting.size[0]//1.5,setting.size[1]))
+
+    def blit(self,background):
+        if self.is_screen:
+            self.surface.fill(setting.white)
+            background.blit(self.surface,(0,0))
 
 class InGame(Screen):
     def __init__(self):
@@ -291,8 +309,8 @@ class InGame(Screen):
 
     def update(self):
         if self.is_screen:
-            self.surface.fill(setting.black)
             self.level.update()
+            self.surface.fill(setting.black)
 
     
     def collide_check(self,players):

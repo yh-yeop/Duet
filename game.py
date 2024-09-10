@@ -22,7 +22,7 @@ class Duet(Setting):
         self.rewind_pause=False
         
         self.intro=Intro()
-        self.menu=MainMenu()
+        self.menu=Menu()
         self.in_game=InGame()
         self.screens=[self.intro,self.menu,self.in_game]
 
@@ -51,7 +51,7 @@ class Duet(Setting):
             if self.time_count["menu_after_intro"]:
                 self.time_count["menu_after_intro"]-=1
                 if self.time_count["menu_after_intro"]<=0:
-                    self.menu.start=True
+                    self.menu.screens[1].start=True
                 elif self.time_count["menu_after_intro"]<=60:
                     for p in self.player: p.speed=1.7
             if self.time_count["rewind"]:
@@ -71,6 +71,12 @@ class Duet(Setting):
 
     def inputs(self):
         keys=pygame.key.get_pressed()
+        d=0
+        if keys[pygame.K_UP]:
+            d=1
+        elif keys[pygame.K_DOWN]:
+            d=-1
+        self.menu.move(d)
         for event in pygame.event.get():
             if event.type==pygame.QUIT or \
             (not self.in_game.is_screen and not self.intro.is_screen and event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):
@@ -111,15 +117,15 @@ class Duet(Setting):
             if not self.intro.is_screen:
                 if event.type==pygame.MOUSEBUTTONDOWN:
                     if self.menu.is_screen:
-                        self.check["menu"]=self.menu.button_check(self.mouse_hitbox,True)
+                        self.check["menu"]=self.menu.screens[1].button_check(self.mouse_hitbox,True)
 
     def move(self):
         if (not self.pause and not self.rewind_pause):
             for screen in self.screens: screen.update()
 
-            if not self.check["menu"]: self.check["menu"]=self.menu.button_check(self.mouse_hitbox,False)
+            if not self.check["menu"]: self.check["menu"]=self.menu.screens[1].button_check(self.mouse_hitbox,False)
 
-            if all(self.check["menu"][1]):
+            if all(self.check["menu"][self.PLAY]):
                 self.check["menu"]=False
                 self.direction=0
                 self.player.sprites()[0].angle=180
@@ -167,16 +173,14 @@ class Duet(Setting):
     def draw(self):
         self.background.fill(self.black)
 
-        for screen in self.screens:
-            if screen.is_screen:
-                screen.surface.fill(self.black)
+        a=[s.is_screen for s in self.screens]
 
 
         if self.in_game.is_screen:
             draw_player(self.player,self.in_game.surface,"ingame")
 
         else:
-            draw_player(self.player,self.menu.surface,"menu")
+            draw_player(self.player,self.menu.screens[1].surface,"menu")
 
 
         for screen in self.screens:
