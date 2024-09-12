@@ -1,5 +1,5 @@
 import pygame
-from setting import *
+from setting import Setting
 from objects import *
 from util import *
 
@@ -71,13 +71,9 @@ class Duet(Setting):
 
     def inputs(self):
         keys=pygame.key.get_pressed()
-        d=0
-        if keys[pygame.K_UP]:
-            d=1
-        elif keys[pygame.K_DOWN]:
-            d=-1
-        self.menu.move(d)
-        for event in pygame.event.get():
+        events=pygame.event.get()
+        if not events: self.check["menu"]=self.menu.screens[1].button_check(self.mouse_hitbox,False)
+        for event in events:
             if event.type==pygame.QUIT or \
             (not self.in_game.is_screen and not self.intro.is_screen and event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):
                 self.play=False
@@ -115,25 +111,26 @@ class Duet(Setting):
 
 
             if not self.intro.is_screen:
-                if event.type==pygame.MOUSEBUTTONDOWN:
-                    if self.menu.is_screen:
-                        self.check["menu"]=self.menu.screens[1].button_check(self.mouse_hitbox,True)
+                if self.menu.is_screen:
+                    self.check["menu"]=self.menu.screens[1].button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
 
     def move(self):
         if (not self.pause and not self.rewind_pause):
             for screen in self.screens: screen.update()
 
-            if not self.check["menu"]: self.check["menu"]=self.menu.screens[1].button_check(self.mouse_hitbox,False)
-
-            if all(self.check["menu"][self.PLAY]):
-                self.check["menu"]=False
-                self.direction=0
-                self.player.sprites()[0].angle=180
-                self.player.sprites()[1].angle=0
-                for p in self.player: p.speed=2.4 # 2.4
-                Particle.speed=0.7
-                self.in_game.level=Level("test_level_2")
-                screen_change(self.screens,self.in_game)
+            if self.check["menu"]:
+                if all(self.check["menu"][self.BUTTON.PLAY]):
+                    self.menu.set_direction(-1)
+                    # self.check["menu"]=False
+                    # self.direction=0
+                    # self.player.sprites()[0].angle=180
+                    # self.player.sprites()[1].angle=0
+                    # for p in self.player: p.speed=2.4 # 2.4
+                    # Particle.speed=0.7
+                    # self.in_game.level=Level("test_level_2")
+                    # screen_change(self.screens,self.in_game)
+                elif all(self.check["menu"][self.BUTTON.SETTING]):
+                    self.menu.set_direction(1)
 
             if self.intro.is_intro_done():
                 for p in self.player:
@@ -173,13 +170,12 @@ class Duet(Setting):
     def draw(self):
         self.background.fill(self.black)
 
-        a=[s.is_screen for s in self.screens]
-
-
         if self.in_game.is_screen:
+            self.in_game.fill()
             draw_player(self.player,self.in_game.surface,"ingame")
 
         else:
+            self.menu.screens[self.SCREEN.MAIN].fill()
             draw_player(self.player,self.menu.screens[1].surface,"menu")
 
 

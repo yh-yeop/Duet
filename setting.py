@@ -9,5 +9,17 @@ class Setting:
         self.frame=120
         self.player_center={"ingame":(self.center[0],self.size[1]//8*7),
                             "menu":self.center}
+        self.BUTTON=ButtonConstant()
+        self.SCREEN=ScreenConstant()
+        
+
+class ButtonConstant:
+    def __init__(self):
         self.SETTING=0
         self.PLAY=1
+
+class ScreenConstant:
+    def __init__(self):
+        self.SETTING=0
+        self.MAIN=1
+        self.PLAY=2

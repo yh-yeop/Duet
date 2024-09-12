@@ -1,5 +1,5 @@
 import pygame
-from setting import *
+from setting import Setting
 from pygame.math import Vector2
 from util import *
 import pandas as pd
@@ -164,7 +164,7 @@ class Button(Objects):
     def blit(self,background):
         background.blit(self.image,self.rect.topleft)
         if self.box:
-            pygame.draw.rect(background,setting.white,self.rect,1)
+            pygame.draw.rect(background,(255,0,0),self.rect,1)
 
 
 
@@ -225,22 +225,31 @@ class Intro(Screen):
     
 
 class Menu(Screen):
-    def __init__(self, size=Vector2(*setting.size)+Vector2(2*setting.size[0]//1.5,0)):
+    def __init__(self, size=Vector2(*setting.size)+Vector2(2*setting.size[0]//1.25,0)):
         super().__init__(size)
         self.screens=[SettingMenu(),MainMenu(),PlayMenu()]
         for s in self.screens: s.is_screen=True
-        self.pos=[-setting.size[0]//1.5,0]
+        self.pos=[-setting.size[0]//1.25,0]
+        self.now=setting.SCREEN.MAIN
+        self.target=setting.SCREEN.MAIN
         self.direction=0
         
-    def move(self,direction):
-        self.direction=7*direction
-        self.pos[0]+=7*direction
+    def set_direction(self,direction):
+        t=self.target
+        self.target=min(max(self.target-direction,setting.SCREEN.PLAY),setting.SCREEN.SETTING)
+        print(f"원래 타겟: {t}, 현재 타겟: {self.target}, self.now: {self.now}")
+        self.direction=1 if self.target>self.now else -1
 
     def update(self):
+        self.pos[0]=min(max(self.pos[0]+13*self.direction,-setting.size[0]//1.25*2),0)
+        if self.pos[0]==0:
+            self.now=setting.SCREEN.SETTING
+            self.direction=0
+        elif self.pos[0]==-setting.size[0]//1.25:
+            self.now=setting.SCREEN.PLAY
+            self.direction=0
         for s in self.screens: s.update()
         
-        if not self.pos[0] in (-setting.size[0]//1.5,0,setting.size[0]//1.5):
-            pass
 
     def blit(self,background):
         if self.is_screen:
@@ -267,35 +276,42 @@ class MainMenu(Screen):
             for button in self.buttons:
                 if button.rect.y!=setting.size[1]-self.button_size-20:
                     button.rect.y=max(button.rect.y-5,setting.size[1]-self.button_size-20)
-            self.surface.fill(setting.black)
+
+    def fill(self):
+        self.surface.fill(setting.black)
 
     def button_check(self,mouse,click):
         for button in self.buttons:
             if button==self.buttons[0] and all(button.mouse_check(mouse,click)):
-                print("설정 누름***********************************************")
+                print("설정 누름")
             elif button==self.buttons[1] and all(button.mouse_check(mouse,click)):
-                print("플레이 누름@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+                print("플레이 누름")
         return [button.mouse_check(mouse,click) for button in self.buttons]
         
     def blit(self,background):
         if self.is_screen:
             self.surface.blit(*self.text)
             for b in self.buttons: b.blit(self.surface)
-            background.blit(self.surface,(setting.size[0]//1.5,0))
-            print(self.is_screen)
+            background.blit(self.surface,(setting.size[0]//1.25,0))
 
 class PlayMenu(Screen):
     def __init__(self):
-        super().__init__((setting.size[0]//1.5,setting.size[1]))
+        super().__init__((setting.size[0]//1.25,setting.size[1]))
 
     def blit(self,background):
         if self.is_screen:
-            self.surface.fill(setting.white)
-            background.blit(self.surface,(setting.size[0]//1.5+setting.size[0],0))
+            self.surface.fill(setting.black)
+            for i in range(45,90):
+                blit_surface=pygame.Surface((1,setting.size[1]),pygame.SRCALPHA)
+                blit_surface.fill(setting.white)
+                blit_surface.set_alpha(int(255*(math.cos(math.radians(i)))))
+                self.surface.blit(blit_surface,(i-45,0))
+            pygame.draw.rect(self.surface,setting.red,(0,0,*self.surface.get_size()),1)
+            background.blit(self.surface,(setting.size[0]//1.25+setting.size[0],0))
 
 class SettingMenu(Screen):
     def __init__(self):
-        super().__init__((setting.size[0]//1.5,setting.size[1]))
+        super().__init__((setting.size[0]//1.25,setting.size[1]))
 
     def blit(self,background):
         if self.is_screen:
@@ -310,11 +326,13 @@ class InGame(Screen):
     def update(self):
         if self.is_screen:
             self.level.update()
-            self.surface.fill(setting.black)
 
     
     def collide_check(self,players):
         return self.level.collide_check(players) if self.is_screen else False
+
+    def fill(self):
+            self.surface.fill(setting.black)
 
     def blit(self,background):
         if self.is_screen:
@@ -342,6 +360,7 @@ class Level:
         # self.obs_group=pygame.sprite.Group(*[Obstacle(*self.df.loc[i].to_dict().values()) for i in range(self.max_obs)])
         self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in df_list])
         self.rewind=False
+        self.progress=0
 
     def update(self,rewind_speed=-20):
         if self.rewind:
@@ -351,6 +370,7 @@ class Level:
                     o.rect.topleft=o.x,o.y
                     o.rect.size=o.w,o.h
                 self.rewind_change(False)
+                self.progress=0
         else:
             for o in self.obs_group: o.update()
 
