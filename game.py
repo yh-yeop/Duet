@@ -61,7 +61,7 @@ class Duet(Setting):
                     self.rewind_pause=False
                     self.in_game.level.rewind_change()
         else:
-            print("일시정지--------------------------------")
+            print("일시정지")
         if not self.intro.is_screen:
             self.mouse_hitbox.rect.center=pygame.mouse.get_pos()
         dt=self.clock.tick(self.frame)
@@ -92,6 +92,12 @@ class Duet(Setting):
                 if self.intro.is_screen:
                     if event.key==pygame.K_ESCAPE:
                         self.intro.skip=True
+                
+                if self.menu.is_screen:
+                    if event.key==pygame.K_LEFT:
+                        self.menu.set_direction(1)
+                    if event.key==pygame.K_RIGHT:
+                        self.menu.set_direction(-1)
 
                 if event.key==pygame.K_0:
                     self.player.sprites()[0].angle=180
@@ -136,8 +142,10 @@ class Duet(Setting):
                     self.player.sprites()[1].angle=0
                     for p in self.player: p.speed=2.4 # 2.4
                     Particle.speed=0.7
-                    self.in_game.level=Level("test_level_2")
+                    self.in_game.level=Level("test_level")
                     screen_change(self.screens,self.in_game)
+                    self.menu.direction=0
+                    self.menu.pos=[-setting.size[0]//1.25,0]
 
             if self.intro.is_intro_done():
                 for p in self.player:

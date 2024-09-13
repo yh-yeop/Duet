@@ -140,7 +140,7 @@ class Obstacle(Objects):
             return re_value
         for row in re_value:
             if row[0]:
-                print("충돌함++++++++++++++++++++++++++++++++++++++++++++++")
+                print("충돌함")
                 if self.angle:
                     pygame.draw.rect(self.image,players[row[1]].color,(*row[0],5,5))
 
@@ -235,6 +235,8 @@ class Menu(Screen):
         self.direction=0
         
     def set_direction(self,direction):
+        if -self.direction==direction:
+            self.now-=self.direction
         self.direction=direction
 
 
@@ -257,7 +259,6 @@ class Menu(Screen):
                 self.now=setting.SCREEN.MAIN
                 self.direction=0
         for s in self.screens: s.update()
-        
 
     def blit(self,background):
         if self.is_screen:
@@ -275,7 +276,7 @@ class MainMenu(Screen):
         self.button_size=60
         self.buttons=[Button(return_image("setting.png",(self.button_size,self.button_size)),[20,setting.size[1]]),
                       Button(return_image("play.png",(self.button_size,self.button_size)),[setting.size[0]-20-self.button_size,setting.size[1]])]
-        self.log_print=False
+        
     
     def update(self):
         if self.start and self.is_screen:
@@ -309,9 +310,15 @@ class PlayMenu(Screen):
 
     def button_check(self,mouse,click):
         for button in self.buttons:
+            button.rect.move_ip(setting.size[0]-setting.size[0]//1.25,0)
             if button==self.buttons[0] and all(button.mouse_check(mouse,click)):
                 print("테스트 레벨 누름")
-        return [button.mouse_check(mouse,click) for button in self.buttons]
+        
+        re_value=[button.mouse_check(mouse,click) for button in self.buttons]
+        
+        for button in self.buttons: button.rect.move_ip(-(setting.size[0]-setting.size[0]//1.25),0)
+        
+        return re_value
     
 
     def blit(self,background):
@@ -323,7 +330,7 @@ class PlayMenu(Screen):
                 blit_surface.set_alpha(int(255*(math.cos(math.radians(i)))))
                 self.surface.blit(blit_surface,(i-45,0))
             for b in self.buttons: b.blit(self.surface)
-            pygame.draw.rect(self.surface,setting.red,(0,0,*self.surface.get_size()),1)
+            if Objects.box: pygame.draw.rect(self.surface,setting.red,(0,0,*self.surface.get_size()),1)
             background.blit(self.surface,(setting.size[0]//1.25+setting.size[0],0))
 
 class SettingMenu(Screen):
