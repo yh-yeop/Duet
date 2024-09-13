@@ -235,19 +235,27 @@ class Menu(Screen):
         self.direction=0
         
     def set_direction(self,direction):
-        t=self.target
-        self.target=min(max(self.target-direction,setting.SCREEN.PLAY),setting.SCREEN.SETTING)
-        print(f"원래 타겟: {t}, 현재 타겟: {self.target}, self.now: {self.now}")
-        self.direction=1 if self.target>self.now else -1
+        self.direction=direction
+
 
     def update(self):
+        # print(f"self.target: {self.target}, self.now: {self.now}, self.direction: {self.direction}")
         self.pos[0]=min(max(self.pos[0]+13*self.direction,-setting.size[0]//1.25*2),0)
         if self.pos[0]==0:
             self.now=setting.SCREEN.SETTING
             self.direction=0
-        elif self.pos[0]==-setting.size[0]//1.25:
+        elif self.pos[0]==-setting.size[0]//1.25*2:
             self.now=setting.SCREEN.PLAY
             self.direction=0
+        if self.now!=setting.SCREEN.MAIN:
+            if self.now==setting.SCREEN.PLAY:
+                self.pos[0]=min(self.pos[0],-setting.size[0]//1.25)
+            if self.now==setting.SCREEN.SETTING:
+                self.pos[0]=max(self.pos[0],-setting.size[0]//1.25)
+
+            if self.pos[0]==-setting.size[0]//1.25:
+                self.now=setting.SCREEN.MAIN
+                self.direction=0
         for s in self.screens: s.update()
         
 
@@ -297,6 +305,14 @@ class MainMenu(Screen):
 class PlayMenu(Screen):
     def __init__(self):
         super().__init__((setting.size[0]//1.25,setting.size[1]))
+        self.buttons=[Button(return_image("test_level.png",(60,60)),(Vector2(*self.surface.get_size())//2)-Vector2(30,0))]
+
+    def button_check(self,mouse,click):
+        for button in self.buttons:
+            if button==self.buttons[0] and all(button.mouse_check(mouse,click)):
+                print("테스트 레벨 누름")
+        return [button.mouse_check(mouse,click) for button in self.buttons]
+    
 
     def blit(self,background):
         if self.is_screen:
@@ -306,6 +322,7 @@ class PlayMenu(Screen):
                 blit_surface.fill(setting.white)
                 blit_surface.set_alpha(int(255*(math.cos(math.radians(i)))))
                 self.surface.blit(blit_surface,(i-45,0))
+            for b in self.buttons: b.blit(self.surface)
             pygame.draw.rect(self.surface,setting.red,(0,0,*self.surface.get_size()),1)
             background.blit(self.surface,(setting.size[0]//1.25+setting.size[0],0))
 
