@@ -2,8 +2,8 @@ import pygame
 from setting import Setting
 setting=Setting()
 
-def draw_player_circle(background,r=setting.center[0]//5*2,alpha=128,center=setting.player_center["menu"]):
-    circle_surface=pygame.Surface(setting.size,pygame.SRCALPHA)
+def draw_player_circle(background,r=setting.CENTER[0]//5*2,alpha=128,center=setting.PLAYER_CENTER["menu"]):
+    circle_surface=pygame.Surface(setting.SIZE,pygame.SRCALPHA)
     pygame.draw.circle(circle_surface,(200,200,200,alpha),center,r,1)
     background.blit(circle_surface,(0,0))
 
@@ -17,7 +17,7 @@ def return_font(size,name="malgungothic",bold=False,italic=False,isfile=False):
             except FileNotFoundError: return pygame.font.Font("Duet-main/"+name,size)
     return pygame.font.SysFont(name,size,bold,italic)
 
-def return_text(font,text="test",antialias=True,color=setting.white):
+def return_text(font,text="test",antialias=True,color=setting.WHITE):
     return font.render(text,antialias,color)
 
 def return_image(path,size=False):
@@ -31,7 +31,7 @@ def return_image(path,size=False):
     else: return image
 
 def draw_player(player,background,screen):
-    pos=setting.player_center[screen]
+    pos=setting.PLAYER_CENTER[screen]
     draw_player_circle(background,center=pos)
     for p in player:
         p.center=pos

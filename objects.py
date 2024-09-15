@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import math
 setting=Setting()
-FRAME_SPEED=(1000//setting.frame)/(1000//120)
+FRAME_SPEED=(1000//setting.FRAME)/(1000//120)
 def set_speed(dt):
     global FRAME_SPEED
     FRAME_SPEED=dt/(1000//120)
@@ -24,7 +24,7 @@ class Objects(pygame.sprite.Sprite):
 class Player(Objects):
     speed=2
     r=12
-    distance=setting.center[0]//5*2
+    distance=setting.CENTER[0]//5*2
     def __init__(self,color,center,direction):
         self.center=Vector2(center)
         self.angle=180 if direction=="left" else 0
@@ -32,13 +32,13 @@ class Player(Objects):
         self.color=color
         self.alpha=220
         self.image=pygame.Surface((5,5),pygame.SRCALPHA)
-        pygame.draw.rect(self.image,setting.white,(0,0,*self.image.get_size()),1)
+        pygame.draw.rect(self.image,setting.WHITE,(0,0,*self.image.get_size()),1)
         self.particle_group=pygame.sprite.Group()
         super().__init__(pos,self.image,self.angle)
 
     
     def update(self,angle_plus):
-        self.angle+=angle_plus*self.speed*FRAME_SPEED
+        self.angle=(self.angle+angle_plus*self.speed*FRAME_SPEED)%360
         self.rect.center=self.center+Vector2(self.distance,0).rotate(self.angle)
         self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,self.angle))
         self.particle_group.update()
@@ -49,7 +49,7 @@ class Player(Objects):
 
 
     def blit(self,background):
-        player_surface=pygame.Surface(setting.size,pygame.SRCALPHA)
+        player_surface=pygame.Surface(setting.SIZE,pygame.SRCALPHA)
         for p in self.particle_group: p.blit(player_surface)
         pygame.draw.circle(player_surface,(*self.color,self.alpha),self.rect.topleft,self.r)
         if self.box:
@@ -59,7 +59,6 @@ class Player(Objects):
         background.blit(player_surface,(0,0))
 
 class Particle(Objects):
-    speed=0
     def __init__(self,color,size,pos=Vector2(0,0),angle=0):
         self.image=pygame.Surface(size,pygame.SRCALPHA)
         self.color=color
@@ -79,14 +78,15 @@ class Particle(Objects):
         background.blit(self.blit_image,blit_pos)
 
 class PlayerParticle(Particle):
+    dy=0
     def __init__(self, color, pos=Vector2(0,0),angle=0):
-        super().__init__(color,(17,10),pos)
+        super().__init__(color,(17,10),pos,angle)
         self.image=pygame.transform.rotozoom(self.image,self.angle,1)
 
     def update(self):
         super().update()
         self.blit_image.set_alpha(self.alpha)
-        self.rect.y+=self.speed*FRAME_SPEED
+        self.rect.y+=self.dy*FRAME_SPEED
 
 
 class DeathParticle(Particle):
@@ -111,7 +111,7 @@ class Obstacle(Objects):
             self.angle,self.angle_plus,self.dx_plus,self.dy_plus=args
         if self.shape=="rect": image=pygame.Surface((self.w,self.h),pygame.SRCALPHA)
         else: raise SyntaxError
-        image.fill(setting.white)
+        image.fill(setting.WHITE)
         super().__init__(Vector2(self.x,self.y),image,self.angle)
         self.invincible=False
         self.pos=list(self.rect.center)
@@ -129,7 +129,7 @@ class Obstacle(Objects):
             self.rect=self.image.get_rect(center=self.pos)
         else:
             self.image=self.backup_image
-        if self.rect.y>=setting.center[1]:
+        if self.rect.y>=setting.CENTER[1]:
             if self.dx_plus: self.dx+=self.dx_plus*speed*FRAME_SPEED
             if self.dy_plus: self.dy+=self.dy_plus*speed*FRAME_SPEED
 
@@ -169,7 +169,7 @@ class Button(Objects):
 
 
 class Screen:
-    def __init__(self,size=setting.size):
+    def __init__(self,size=setting.SIZE):
         self.surface=pygame.Surface(size,pygame.SRCALPHA)
         self.eng_font="Montserrat/static/Montserrat-Thin.ttf"
         self.kor_font="malgungothic"
@@ -189,11 +189,11 @@ class Intro(Screen):
         self.is_screen=True
         self.alpha=30
         self.skip=False
-        self.r=setting.size[1]+200
-        self.texts=[(return_text(return_font(30,self.kor_font),"제작",color=setting.black),[setting.center[0],setting.center[1]-50]),
-                    (return_text(return_font(30,self.eng_font,isfile=True),"Yoon Ho Yeop",color=setting.black),list(setting.center)),
-                    (return_text(return_font(30,self.kor_font),"음악",color=setting.black),[setting.center[0],setting.center[1]+50]),
-                    (return_text(return_font(30,self.eng_font,isfile=True),"Tim Shiel",color=setting.black),[setting.center[0],setting.center[1]+100])]
+        self.r=setting.SIZE[1]+200
+        self.texts=[(return_text(return_font(30,self.kor_font),"제작",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]-50]),
+                    (return_text(return_font(30,self.eng_font,isfile=True),"Yoon Ho Yeop",color=setting.BLACK),list(setting.CENTER)),
+                    (return_text(return_font(30,self.kor_font),"음악",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]+50]),
+                    (return_text(return_font(30,self.eng_font,isfile=True),"Tim Shiel",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]+100])]
                 
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 
@@ -205,31 +205,27 @@ class Intro(Screen):
     def update(self):
         if self.is_screen:
             self.r=max(self.r-3,100)
-            if self.r>setting.size[1]-100: self.alpha+=5
-
+            if self.r>setting.SIZE[1]-100: self.alpha+=5
             else:
                 self.alpha=max(self.alpha-4,0)
                 for i in range(0,len(self.texts),2): self.texts[i][0].set_alpha(self.alpha)
-
             for i in range(0,len(self.texts),2): self.texts[i+1][0].set_alpha(self.alpha)
-            if self.skip:
-                self.r=100
+            if self.skip: self.r=100
 
     def blit(self,background):
         if self.is_screen:
-            self.surface.fill(setting.black)
-            pygame.draw.circle(self.surface,setting.white,setting.player_center["menu"],self.r)
-            for text in self.texts:
-                self.surface.blit(*text)
+            self.surface.fill(setting.BLACK)
+            pygame.draw.circle(self.surface,setting.WHITE,setting.PLAYER_CENTER["menu"],self.r)
+            for text in self.texts: self.surface.blit(*text)
             background.blit(self.surface,(0,0))
     
 
 class Menu(Screen):
-    def __init__(self, size=Vector2(*setting.size)+Vector2(2*setting.size[0]//1.25,0)):
+    def __init__(self, size=Vector2(*setting.SIZE)+Vector2(2*setting.SIZE[0]//1.25,0)):
         super().__init__(size)
         self.screens=[SettingMenu(),MainMenu(),PlayMenu()]
         for s in self.screens: s.is_screen=True
-        self.pos=[-setting.size[0]//1.25,0]
+        self.pos=[-setting.SIZE[0]//1.25,0]
         self.now=setting.SCREEN.MAIN
         self.target=setting.SCREEN.MAIN
         self.direction=0
@@ -237,32 +233,34 @@ class Menu(Screen):
     def set_direction(self,direction):
         if -self.direction==direction:
             self.now-=self.direction
+        if self.direction==direction:
+            self.now=setting.SCREEN.MAIN
         self.direction=direction
 
 
     def update(self):
         # print(f"self.target: {self.target}, self.now: {self.now}, self.direction: {self.direction}")
-        self.pos[0]=min(max(self.pos[0]+13*self.direction,-setting.size[0]//1.25*2),0)
+        self.pos[0]=min(max(self.pos[0]+13*self.direction,-setting.SIZE[0]//1.25*2),0)
         if self.pos[0]==0:
             self.now=setting.SCREEN.SETTING
             self.direction=0
-        elif self.pos[0]==-setting.size[0]//1.25*2:
+        elif self.pos[0]==-setting.SIZE[0]//1.25*2:
             self.now=setting.SCREEN.PLAY
             self.direction=0
         if self.now!=setting.SCREEN.MAIN:
             if self.now==setting.SCREEN.PLAY:
-                self.pos[0]=min(self.pos[0],-setting.size[0]//1.25)
+                self.pos[0]=min(self.pos[0],-setting.SIZE[0]//1.25)
             if self.now==setting.SCREEN.SETTING:
-                self.pos[0]=max(self.pos[0],-setting.size[0]//1.25)
+                self.pos[0]=max(self.pos[0],-setting.SIZE[0]//1.25)
 
-            if self.pos[0]==-setting.size[0]//1.25:
+            if self.pos[0]==-setting.SIZE[0]//1.25:
                 self.now=setting.SCREEN.MAIN
                 self.direction=0
         for s in self.screens: s.update()
 
     def blit(self,background):
         if self.is_screen:
-            self.surface.fill(setting.black)
+            self.surface.fill(setting.BLACK)
             for s in self.screens: s.blit(self.surface)
             background.blit(self.surface,self.pos)
 
@@ -270,76 +268,79 @@ class MainMenu(Screen):
     def __init__(self):
         super().__init__()
         self.start=False
-        self.text=[return_text(return_font(120,self.eng_font,isfile=True),"DUET"),Vector2(setting.center[0],0)]
+        self.text=[return_text(return_font(120,self.eng_font,isfile=True),"DUET"),Vector2(setting.CENTER[0],0)]
         self.text[1]-=Vector2(*self.text[0].get_size())//2
         self.text[1][1]-=self.text[0].get_size()[1]//2
         self.button_size=60
-        self.buttons=[Button(return_image("setting.png",(self.button_size,self.button_size)),[20,setting.size[1]]),
-                      Button(return_image("play.png",(self.button_size,self.button_size)),[setting.size[0]-20-self.button_size,setting.size[1]])]
+        self.buttons=[Button(return_image("setting.png",(self.button_size,self.button_size)),[20,setting.SIZE[1]]),
+                      Button(return_image("play.png",(self.button_size,self.button_size)),[setting.SIZE[0]-20-self.button_size,setting.SIZE[1]])]
         
     
     def update(self):
         if self.start and self.is_screen:
-            if self.text[1][1]!=25:
-                self.text[1][1]=min(self.text[1][1]+11*FRAME_SPEED,25)
+            if self.text[1][1]!=25: self.text[1][1]=min(self.text[1][1]+11*FRAME_SPEED,25)
             for button in self.buttons:
-                if button.rect.y!=setting.size[1]-self.button_size-20:
-                    button.rect.y=max(button.rect.y-5,setting.size[1]-self.button_size-20)
+                if button.rect.y!=setting.SIZE[1]-self.button_size-20:
+                    button.rect.y=max(button.rect.y-5,setting.SIZE[1]-self.button_size-20)
 
     def fill(self):
-        self.surface.fill(setting.black)
+        self.surface.fill(setting.BLACK)
 
     def button_check(self,mouse,click):
         for button in self.buttons:
-            if button==self.buttons[0] and all(button.mouse_check(mouse,click)):
-                print("설정 누름")
-            elif button==self.buttons[1] and all(button.mouse_check(mouse,click)):
-                print("플레이 누름")
+            if button==self.buttons[0] and all(button.mouse_check(mouse,click)): print("설정 메뉴(마우스)")
+            elif button==self.buttons[1] and all(button.mouse_check(mouse,click)): print("플레이 메뉴(마우스)")
         return [button.mouse_check(mouse,click) for button in self.buttons]
         
     def blit(self,background):
         if self.is_screen:
             self.surface.blit(*self.text)
             for b in self.buttons: b.blit(self.surface)
-            background.blit(self.surface,(setting.size[0]//1.25,0))
+            background.blit(self.surface,(setting.SIZE[0]//1.25,0))
 
 class PlayMenu(Screen):
     def __init__(self):
-        super().__init__((setting.size[0]//1.25,setting.size[1]))
-        self.buttons=[Button(return_image("test_level.png",(60,60)),(Vector2(*self.surface.get_size())//2)-Vector2(30,0))]
+        super().__init__((setting.SIZE[0]//1.25,setting.SIZE[1]))
+        self.buttons=[Button(return_image("test_level.png",(60,60)),(Vector2(*self.surface.get_size())//2)-Vector2(30,0)),
+                      Button(return_image("lv.png",(60,60)),(Vector2(*self.surface.get_size())//2)+Vector2(-30,80)),
+                      Button(return_text(return_font(50,self.eng_font,isfile=True),"IV"),(Vector2(*self.surface.get_size())//2)+Vector2(-17,80))
+                      ]
 
     def button_check(self,mouse,click):
         for button in self.buttons:
-            button.rect.move_ip(setting.size[0]-setting.size[0]//1.25,0)
-            if button==self.buttons[0] and all(button.mouse_check(mouse,click)):
-                print("테스트 레벨 누름")
+            button.rect.move_ip(setting.SIZE[0]-setting.SIZE[0]//1.25,0)
+            if button==self.buttons[0] and all(button.mouse_check(mouse,click)): print("테스트 레벨 누름")
         
         re_value=[button.mouse_check(mouse,click) for button in self.buttons]
         
-        for button in self.buttons: button.rect.move_ip(-(setting.size[0]-setting.size[0]//1.25),0)
+        for button in self.buttons: button.rect.move_ip(-(setting.SIZE[0]-setting.SIZE[0]//1.25),0)
         
         return re_value
     
 
     def blit(self,background):
         if self.is_screen:
-            self.surface.fill(setting.black)
+            self.surface.fill(setting.BLACK)
             for i in range(45,90):
-                blit_surface=pygame.Surface((1,setting.size[1]),pygame.SRCALPHA)
-                blit_surface.fill(setting.white)
+                blit_surface=pygame.Surface((1,setting.SIZE[1]),pygame.SRCALPHA)
+                blit_surface.fill(setting.WHITE)
                 blit_surface.set_alpha(int(255*(math.cos(math.radians(i)))))
                 self.surface.blit(blit_surface,(i-45,0))
             for b in self.buttons: b.blit(self.surface)
-            if Objects.box: pygame.draw.rect(self.surface,setting.red,(0,0,*self.surface.get_size()),1)
-            background.blit(self.surface,(setting.size[0]//1.25+setting.size[0],0))
+            if Objects.box: pygame.draw.rect(self.surface,setting.RED,(0,0,*self.surface.get_size()),1)
+            background.blit(self.surface,(setting.SIZE[0]//1.25+setting.SIZE[0],0))
 
 class SettingMenu(Screen):
     def __init__(self):
-        super().__init__((setting.size[0]//1.25,setting.size[1]))
-
+        super().__init__((setting.SIZE[0]//1.25,setting.SIZE[1]))
+        self.texts=[(return_text(return_font(50,self.eng_font,isfile=True),"ABCDEFGHI",color=setting.BLACK),(20,0)),
+                    (return_text(return_font(50,self.eng_font,isfile=True),"JKLMNOPQR",color=setting.BLACK),(20,50)),
+                    (return_text(return_font(50,self.eng_font,isfile=True),"STUVWXYZ",color=setting.BLACK),(20,100))
+                    ]
     def blit(self,background):
         if self.is_screen:
-            self.surface.fill(setting.white)
+            self.surface.fill(setting.WHITE)
+            for text in self.texts: self.surface.blit(*text)
             background.blit(self.surface,(0,0))
 
 class InGame(Screen):
@@ -356,7 +357,7 @@ class InGame(Screen):
         return self.level.collide_check(players) if self.is_screen else False
 
     def fill(self):
-            self.surface.fill(setting.black)
+            self.surface.fill(setting.BLACK)
 
     def blit(self,background):
         if self.is_screen:
@@ -385,6 +386,7 @@ class Level:
         self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in df_list])
         self.rewind=False
         self.progress=0
+        self.player_angle=0
 
     def update(self,rewind_speed=-20):
         if self.rewind:
@@ -397,8 +399,9 @@ class Level:
                 self.progress=0
         else:
             for o in self.obs_group: o.update()
+            self.progress+=1
 
-        if self.obs_group.sprites()[-1].rect.top>setting.size[1]:
+        if self.obs_group.sprites()[-1].rect.top>setting.SIZE[1]:
             self.rewind_change()
 
 
@@ -414,9 +417,6 @@ class Level:
             for i in check:
                 if i[0] and (re_value==[] or i[1]!=re_value[0][1]):
                     re_value.append(i)
-        # if re_value:
-        #     self.rewind=True
-        #     for o in self.obs_group: o.invincible=True
         return re_value if len(re_value)!=1 else re_value[0]
 
     def blit(self,background):

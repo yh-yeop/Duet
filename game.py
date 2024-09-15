@@ -7,12 +7,9 @@ from util import *
 class Duet(Setting):
     def __init__(self):
         super().__init__()
-        self.background=pygame.display.set_mode(self.size)
-        self.icon=return_image("icon.jpg")
-        pygame.display.set_icon(self.icon)
         self.init_pygame()
-        self.player=pygame.sprite.Group(Player(self.red,self.player_center["menu"],"left"),
-                                        Player(self.blue,self.player_center["menu"],"right"))
+        self.player=pygame.sprite.Group(Player(self.RED,self.PLAYER_CENTER["menu"],"left"),
+                                        Player(self.BLUE,self.PLAYER_CENTER["menu"],"right"))
         self.clock=pygame.time.Clock()
         self.direction=1
         self.now=pygame.time.get_ticks()
@@ -35,7 +32,10 @@ class Duet(Setting):
 
     def init_pygame(self):
         pygame.init()
+        self.background=pygame.display.set_mode(self.SIZE)
         pygame.display.set_caption("Duet")
+        icon=return_image("icon.jpg")
+        pygame.display.set_icon(icon)
 
     def mainloop(self):
         while True:
@@ -64,7 +64,7 @@ class Duet(Setting):
             print("일시정지")
         if not self.intro.is_screen:
             self.mouse_hitbox.rect.center=pygame.mouse.get_pos()
-        dt=self.clock.tick(self.frame)
+        dt=self.clock.tick(self.FRAME)
         set_speed(dt)
         # fps=1000/dt
         # print(f"FPS: 정상({fps:.2f})" if fps>90 else f"FPS: 비정상({fps:.2f})")
@@ -82,13 +82,17 @@ class Duet(Setting):
                 self.play=False
                 return
             if event.type==pygame.KEYDOWN:
-                if self.in_game.is_screen and (not self.pause and not self.rewind_pause):
-                    if event.key==pygame.K_LEFT:
-                        self.direction=-1
-                    if event.key==pygame.K_RIGHT:
-                        self.direction=1
+                if self.in_game.is_screen:
                     if event.key==pygame.K_ESCAPE:
                         screen_change(self.screens,self.menu)
+                        for p in self.player:
+                            p.speed=2
+                        PlayerParticle.dy=0
+                    if not self.pause and not self.rewind_pause:
+                        if event.key==pygame.K_LEFT:
+                            self.direction=-1
+                        if event.key==pygame.K_RIGHT:
+                            self.direction=1
                 if self.intro.is_screen:
                     if event.key==pygame.K_ESCAPE:
                         self.intro.skip=True
@@ -96,8 +100,10 @@ class Duet(Setting):
                 if self.menu.is_screen:
                     if event.key==pygame.K_LEFT:
                         self.menu.set_direction(1)
+                        print("설정 메뉴(키보드)")
                     if event.key==pygame.K_RIGHT:
                         self.menu.set_direction(-1)
+                        print("플레이 메뉴(키보드)")
 
                 if event.key==pygame.K_0:
                     self.player.sprites()[0].angle=180
@@ -141,11 +147,11 @@ class Duet(Setting):
                     self.player.sprites()[0].angle=180
                     self.player.sprites()[1].angle=0
                     for p in self.player: p.speed=2.4 # 2.4
-                    Particle.speed=0.7
+                    PlayerParticle.dy=0.7
                     self.in_game.level=Level("test_level")
                     screen_change(self.screens,self.in_game)
                     self.menu.direction=0
-                    self.menu.pos=[-setting.size[0]//1.25,0]
+                    self.menu.pos=[-setting.SIZE[0]//1.25,0]
 
             if self.intro.is_intro_done():
                 for p in self.player:
@@ -168,6 +174,7 @@ class Duet(Setting):
             elif self.menu.is_screen:
                 self.direction=1
             self.player.update(self.direction)
+            # self.in_game.level.player_angle=
         else:
             pass
 
@@ -183,7 +190,7 @@ class Duet(Setting):
         
 
     def draw(self):
-        self.background.fill(self.black)
+        self.background.fill(self.BLACK)
 
         if self.in_game.is_screen:
             self.in_game.fill()

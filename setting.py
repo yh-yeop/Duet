@@ -1,14 +1,14 @@
 class Setting:
     def __init__(self):
-        self.size=(450,800)
-        self.center=tuple([size//2 for size in self.size])
-        self.black=(0,0,0)
-        self.white=(255,255,255)
-        self.red=(255,100,100)
-        self.blue=(100,100,255)
-        self.frame=120
-        self.player_center={"ingame":(self.center[0],self.size[1]//8*7),
-                            "menu":self.center}
+        self.SIZE=(450,800)
+        self.CENTER=tuple([size//2 for size in self.SIZE])
+        self.BLACK=(0,0,0)
+        self.WHITE=(255,255,255)
+        self.RED=(255,100,100)
+        self.BLUE=(100,100,255)
+        self.FRAME=120
+        self.PLAYER_CENTER={"ingame":(self.CENTER[0],self.SIZE[1]//8*7),
+                            "menu":self.CENTER}
         self.BUTTON=ButtonConstant()
         self.SCREEN=ScreenConstant()
         
