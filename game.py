@@ -59,6 +59,7 @@ class Duet(Setting):
                 self.time_count["rewind"]-=1
                 if self.time_count["rewind"]<=0:
                     self.rewind_pause=False
+                    for p in self.player: p.set_rewind_speed(self.in_game.level.player_angle)
                     self.in_game.level.rewind_change()
         else:
             print("일시정지")
@@ -131,52 +132,55 @@ class Duet(Setting):
                     self.check["play_menu"]=self.menu.screens[self.SCREEN.PLAY].button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
 
     def move(self):
-        if (not self.pause and not self.rewind_pause):
-            for screen in self.screens: screen.update()
+        if not self.pause:
+            if not self.rewind_pause:
+                for screen in self.screens: screen.update()
 
-            if self.check["main_menu"]:
-                if all(self.check["main_menu"][self.BUTTON.PLAY]):
-                    self.menu.set_direction(-1)
-                elif all(self.check["main_menu"][self.BUTTON.SETTING]):
-                    self.menu.set_direction(1)
+                if self.check["main_menu"]:
+                    if all(self.check["main_menu"][self.BUTTON.PLAY]):
+                        self.menu.set_direction(-1)
+                    elif all(self.check["main_menu"][self.BUTTON.SETTING]):
+                        self.menu.set_direction(1)
 
-            if self.check["play_menu"]:
-                if all(self.check["play_menu"][0]):
-                    self.check["play_menu"]=False
+                if self.check["play_menu"]:
+                    if all(self.check["play_menu"][0]):
+                        self.check["play_menu"]=False
+                        self.direction=0
+                        self.player.sprites()[0].angle=180
+                        self.player.sprites()[1].angle=0
+                        for p in self.player: p.speed=2.4 # 2.4
+                        PlayerParticle.dy=0.7
+                        self.in_game.level=Level("test_level")
+                        screen_change(self.screens,self.in_game)
+                        self.menu.direction=0
+                        self.menu.pos=[-setting.SIZE[0]//1.25,0]
+
+                if self.intro.is_intro_done():
+                    for p in self.player:
+                        p.r=100
+                        p.distance=0
+                    self.time_count["menu_after_intro"]=180 if not self.intro.skip else 1
+                    self.screens=screen_change(self.screens,self.menu)
+
+                if self.player.sprites()[0].r!=Player.r:
+                    for p in self.player:
+                        p.r-=(100-Player.r)/50
+                        p.distance+=Player.distance/50
+                        p.speed+=(2-1.5)/25
+                        if p.r<=Player.r:
+                            p.r=Player.r
+                            p.distance=Player.distance
+                            p.speed=2
+                if self.in_game.level.rewind:
                     self.direction=0
-                    self.player.sprites()[0].angle=180
-                    self.player.sprites()[1].angle=0
-                    for p in self.player: p.speed=2.4 # 2.4
-                    PlayerParticle.dy=0.7
-                    self.in_game.level=Level("test_level")
-                    screen_change(self.screens,self.in_game)
-                    self.menu.direction=0
-                    self.menu.pos=[-setting.SIZE[0]//1.25,0]
-
-            if self.intro.is_intro_done():
-                for p in self.player:
-                    p.r=100
-                    p.distance=0
-                self.time_count["menu_after_intro"]=180 if not self.intro.skip else 1
-                self.screens=screen_change(self.screens,self.menu)
-
-            if self.player.sprites()[0].r!=Player.r:
-                for p in self.player:
-                    p.r-=(100-Player.r)/50
-                    p.distance+=Player.distance/50
-                    p.speed+=(2-1.5)/25
-                    if p.r<=Player.r:
-                        p.r=Player.r
-                        p.distance=Player.distance
-                        p.speed=2
-            if self.in_game.level.rewind:
-                self.direction=0
-            elif self.menu.is_screen:
-                self.direction=1
-            self.player.update(self.direction)
-            # self.in_game.level.player_angle=
-        else:
-            pass
+                elif self.menu.is_screen:
+                    self.direction=1
+                self.player.update(self.direction)
+                self.in_game.level.player_angle=self.player.sprites()[0].angle \
+                    if min(tuple(map(lambda p: p.rect.x,self.player.sprites())))==self.player.sprites()[0].rect.x \
+                    else self.player.sprites()[1].angle
+            else:
+                self.player.update(0)
 
 
     def collide_check(self):
@@ -185,6 +189,7 @@ class Duet(Setting):
             if check:
                 self.time_count["rewind"]=84
                 self.rewind_pause=True
+                PlayerParticle.dy=0
 
 
         

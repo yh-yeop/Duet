@@ -42,8 +42,3 @@ def screen_change(screens,screen):
     for s in screens: s.is_screen=False
     screens[screens.index(screen)].is_screen=True
     return screens
-
-def string_to_int(i=str):
-    if "," in i:
-        return int(i.replace(",",""))
-    return int(i)

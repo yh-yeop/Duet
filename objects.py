@@ -20,7 +20,6 @@ class Objects(pygame.sprite.Sprite):
         self.rect.topleft=pos
         self.angle=angle
 
-
 class Player(Objects):
     speed=2
     r=12
@@ -29,16 +28,29 @@ class Player(Objects):
         self.center=Vector2(center)
         self.angle=180 if direction=="left" else 0
         pos=self.center+Vector2(self.distance,0).rotate(self.angle)
-        self.color=color
-        self.alpha=220
         self.image=pygame.Surface((5,5),pygame.SRCALPHA)
         pygame.draw.rect(self.image,setting.WHITE,(0,0,*self.image.get_size()),1)
-        self.particle_group=pygame.sprite.Group()
         super().__init__(pos,self.image,self.angle)
+        
+        self.alpha=180
+        self.color=color
+        self.particle_group=pygame.sprite.Group()
+        self.rewind=[None,0]
+
+    def set_rewind_speed(self,angle):
+        self.rewind[1]=setting.FRAME*0.8
+        self.rewind[0]=(540-angle)/self.rewind[1]
 
     
     def update(self,angle_plus):
-        self.angle=(self.angle+angle_plus*self.speed*FRAME_SPEED)%360
+        if not self.rewind[1]:
+            self.angle=(self.angle+angle_plus*self.speed*FRAME_SPEED)%360
+        else:
+            self.angle=(self.angle+self.rewind[0])%360
+            self.rewind[1]-=1
+            if not self.rewind[1]:
+                self.angle=round(self.angle)%360
+                print(f"color: {" red" if self.color==setting.RED else "blue"} angle: {self.angle}")
         self.rect.center=self.center+Vector2(self.distance,0).rotate(self.angle)
         self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,self.angle))
         self.particle_group.update()
@@ -83,10 +95,15 @@ class PlayerParticle(Particle):
         super().__init__(color,(17,10),pos,angle)
         self.image=pygame.transform.rotozoom(self.image,self.angle,1)
 
+    @classmethod
+    def set_dy(cls,dy):
+        cls.dy=dy
+
+        
     def update(self):
         super().update()
         self.blit_image.set_alpha(self.alpha)
-        self.rect.y+=self.dy*FRAME_SPEED
+        self.rect.y+=PlayerParticle.dy*FRAME_SPEED
 
 
 class DeathParticle(Particle):
@@ -152,14 +169,20 @@ class Obstacle(Objects):
                 else:
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
         return re_value
+    
+    def blit(self,background):
+        background.blit(self.image,self.rect)
+        if self.box:
+            pygame.draw.rect(background,(255,0,0),self.rect,1)
 
 class Button(Objects):
     def __init__(self,image,pos=Vector2(0,0)):
-        self.image=image
+        self.image=image.convert_alpha()
+        self.alpha=255
         super().__init__(pos,self.image)
 
     def mouse_check(self,mouse,click):
-        return pygame.sprite.collide_mask(mouse,self),click
+        return pygame.sprite.collide_mask(mouse,self),click if self.alpha==255 else None,click
     
     def blit(self,background):
         background.blit(self.image,self.rect.topleft)
@@ -387,10 +410,11 @@ class Level:
         self.rewind=False
         self.progress=0
         self.player_angle=0
+        self.rewind_speed=5
 
-    def update(self,rewind_speed=-20):
+    def update(self):
         if self.rewind:
-            for o in self.obs_group: o.update(rewind_speed)
+            for o in self.obs_group: o.update(-self.rewind_speed)
             if self.obs_group.sprites()[0].rect.y<=self.df.loc[0].to_dict()["y"]:
                 for o in self.obs_group:
                     o.rect.topleft=o.x,o.y
@@ -421,9 +445,7 @@ class Level:
 
     def blit(self,background):
         for obs in self.obs_group:
-            background.blit(obs.image,obs.rect)
-            if obs.box:
-                pygame.draw.rect(background,(255,0,0),obs.rect,1)
+            obs.blit(background)
 
 
 
