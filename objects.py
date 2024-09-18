@@ -106,6 +106,8 @@ class PlayerParticle(Particle):
         self.rect.y+=PlayerParticle.dy*FRAME_SPEED
 
 
+
+
 class DeathParticle(Particle):
     def __init__(self, color,pos=Vector2(0, 0)):
         super().__init__(color,(10,10),pos)

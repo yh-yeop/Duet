@@ -189,7 +189,7 @@ class Duet(Setting):
             if check:
                 self.time_count["rewind"]=84
                 self.rewind_pause=True
-                PlayerParticle.dy=0
+                # PlayerParticle.dy=0
 
 
         
