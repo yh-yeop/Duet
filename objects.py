@@ -50,7 +50,8 @@ class Player(Objects):
             self.rewind[1]-=1
             if not self.rewind[1]:
                 self.angle=round(self.angle)%360
-                print(f"color: {" red" if self.color==setting.RED else "blue"} angle: {self.angle}")
+                color=" red" if self.color==setting.RED else "blue"
+                print(f"color: {color} angle: {self.angle}")
         self.rect.center=self.center+Vector2(self.distance,0).rotate(self.angle)
         self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,self.angle))
         self.particle_group.update()
@@ -412,28 +413,33 @@ class Level:
         self.rewind=False
         self.progress=0
         self.player_angle=0
-        self.rewind_speed=5
+        self.pause_tick=0
 
     def update(self):
-        if self.rewind:
-            for o in self.obs_group: o.update(-self.rewind_speed)
-            if self.obs_group.sprites()[0].rect.y<=self.df.loc[0].to_dict()["y"]:
-                for o in self.obs_group:
-                    o.rect.topleft=o.x,o.y
-                    o.rect.size=o.w,o.h
-                self.rewind_change(False)
-                self.progress=0
-        else:
-            for o in self.obs_group: o.update()
-            self.progress+=1
+        if not self.pause_tick:
+            if self.rewind:
+                for o in self.obs_group: o.update(-self.progress/(setting.FRAME*0.8))
+                if self.obs_group.sprites()[0].rect.y<=self.df.loc[0].to_dict()["y"]:
+                    for o in self.obs_group:
+                        o.rect.topleft=o.x,o.y
+                        o.rect.size=o.w,o.h
+                    self.rewind_change(False)
+                    self.progress=0
+            else:
+                for o in self.obs_group: o.update()
+                self.progress+=1
 
-        if self.obs_group.sprites()[-1].rect.top>setting.SIZE[1]:
-            self.rewind_change()
+            if self.obs_group.sprites()[-1].rect.top>setting.SIZE[1]:
+                self.rewind_change()
+        else:
+            self.pause_tick-=1
 
 
     def rewind_change(self,flag=True):
         self.rewind=flag
         for o in self.obs_group: o.invincible=flag
+        if flag:
+            self.pause_tick=setting.FRAME*2
             
 
     def collide_check(self,players):
