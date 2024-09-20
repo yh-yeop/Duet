@@ -88,7 +88,7 @@ class Duet(Setting):
                         screen_change(self.screens,self.menu)
                         for p in self.player:
                             p.speed=2
-                        PlayerParticle.dy=0
+                        PlayerParticle.set_dy(0)
                     if not self.pause and not self.rewind_pause:
                         if event.key==pygame.K_LEFT:
                             self.direction=-1
@@ -149,7 +149,7 @@ class Duet(Setting):
                         self.player.sprites()[0].angle=180
                         self.player.sprites()[1].angle=0
                         for p in self.player: p.speed=2.4 # 2.4
-                        PlayerParticle.dy=0.7
+                        PlayerParticle.set_dy(0.7)
                         self.in_game.level=Level("test_level")
                         screen_change(self.screens,self.in_game)
                         self.menu.direction=0

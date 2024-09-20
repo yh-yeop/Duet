@@ -50,8 +50,8 @@ class Player(Objects):
             self.rewind[1]-=1
             if not self.rewind[1]:
                 self.angle=round(self.angle)%360
-                color=" red" if self.color==setting.RED else "blue"
-                print(f"color: {color} angle: {self.angle}")
+                # color=" red" if self.color==setting.RED else "blue"
+                # print(f"color: {color} angle: {self.angle}")
         self.rect.center=self.center+Vector2(self.distance,0).rotate(self.angle)
         self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,self.angle))
         self.particle_group.update()
@@ -66,9 +66,9 @@ class Player(Objects):
         for p in self.particle_group: p.blit(player_surface)
         pygame.draw.circle(player_surface,(*self.color,self.alpha),self.rect.topleft,self.r)
         if self.box:
-            a=self.rect.copy()
-            a.center=a.topleft
-            player_surface.blit(self.image,a.topleft)
+            box=self.rect.copy()
+            box.center=box.topleft
+            player_surface.blit(self.image,box.topleft)
         background.blit(player_surface,(0,0))
 
 class Particle(Objects):
@@ -328,9 +328,12 @@ class PlayMenu(Screen):
     def __init__(self):
         super().__init__((setting.SIZE[0]//1.25,setting.SIZE[1]))
         self.buttons=[Button(return_image("test_level.png",(60,60)),(Vector2(*self.surface.get_size())//2)-Vector2(30,0)),
-                      Button(return_image("lv.png",(60,60)),(Vector2(*self.surface.get_size())//2)+Vector2(-30,80)),
-                      Button(return_text(return_font(50,self.eng_font,isfile=True),"IV"),(Vector2(*self.surface.get_size())//2)+Vector2(-17,80))
                       ]
+        
+        self.texts=[
+            (return_text(return_font(25,self.kor_font),"플레이",color=setting.WHITE),Vector2(self.surface.get_size()[0]//2,10))
+                    ]
+        for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 
     def button_check(self,mouse,click):
         for button in self.buttons:
@@ -354,15 +357,17 @@ class PlayMenu(Screen):
                 self.surface.blit(blit_surface,(i-45,0))
             for b in self.buttons: b.blit(self.surface)
             if Objects.box: pygame.draw.rect(self.surface,setting.RED,(0,0,*self.surface.get_size()),1)
+            for text in self.texts: self.surface.blit(*text)
             background.blit(self.surface,(setting.SIZE[0]//1.25+setting.SIZE[0],0))
 
 class SettingMenu(Screen):
     def __init__(self):
         super().__init__((setting.SIZE[0]//1.25,setting.SIZE[1]))
-        self.texts=[(return_text(return_font(50,self.eng_font,isfile=True),"ABCDEFGHI",color=setting.BLACK),(20,0)),
-                    (return_text(return_font(50,self.eng_font,isfile=True),"JKLMNOPQR",color=setting.BLACK),(20,50)),
-                    (return_text(return_font(50,self.eng_font,isfile=True),"STUVWXYZ",color=setting.BLACK),(20,100))
+        self.texts=[
+            (return_text(return_font(30,self.kor_font),"설정",color=setting.BLACK),Vector2(self.surface.get_size()[0]//2,10))
                     ]
+        for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
+
     def blit(self,background):
         if self.is_screen:
             self.surface.fill(setting.WHITE)
@@ -438,8 +443,11 @@ class Level:
     def rewind_change(self,flag=True):
         self.rewind=flag
         for o in self.obs_group: o.invincible=flag
-        if flag:
-            self.pause_tick=setting.FRAME*2
+        if not flag:
+            self.pause_tick=setting.FRAME*0.2
+            PlayerParticle.set_dy(0.7)
+        else:
+            PlayerParticle.set_dy(-0.7*self.progress/(setting.FRAME*0.8))
             
 
     def collide_check(self,players):
