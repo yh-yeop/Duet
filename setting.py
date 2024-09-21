@@ -9,9 +9,14 @@ class Setting:
         self.FRAME=120
         self.PLAYER_CENTER={"ingame":(self.CENTER[0],self.SIZE[1]//8*7),
                             "menu":self.CENTER}
-        self.BUTTON=ButtonConstant()
-        self.SCREEN=ScreenConstant()
+        self.BUTTON={"SETTING":0,
+                     "PLAY":1}
         
+        self.SCREEN={"SETTING":0,
+                     "MAIN":1,
+                     "PLAY":2}        
+        self.BUTTON=ButtonConstant()
+        self.SCREEN=ScreenConstant()        
 
 class ButtonConstant:
     def __init__(self):

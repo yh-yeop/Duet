@@ -20,6 +20,12 @@ class Objects(pygame.sprite.Sprite):
         self.rect.topleft=pos
         self.angle=angle
 
+    @classmethod
+    def onoff_box(cls,flag=None):
+        if flag==None:
+            cls.box=not cls.box
+        else:
+            cls.box=flag
 
 class Player(Objects):
     speed=2
@@ -138,6 +144,11 @@ class Obstacle(Objects):
         self.pos=list(self.rect.center)
         self.backup_image=self.image.copy()
 
+    def onoff_invincible(self,flag=None):
+        if flag==None:
+            self.invincible=not self.invincible
+        else:
+            self.invincible=flag
 
     def update(self,speed=1):
         self.pos[0]+=self.dx*speed*FRAME_SPEED
@@ -179,11 +190,18 @@ class Obstacle(Objects):
         if self.box:
             pygame.draw.rect(background,(255,0,0),self.rect,1)
 
+class SpecialObs(Obstacle):
+    def __init__(self, *args):
+        super().__init__(*args)
+
 class Button(Objects):
     def __init__(self,image,pos=Vector2(0,0)):
         self.image=image.convert_alpha()
         self.alpha=255
         super().__init__(pos,self.image)
+
+    def plus_alpha(self,plus):
+        self.alpha=max(min(self.alpha+plus,255),0)
 
     def mouse_check(self,mouse,click):
         return pygame.sprite.collide_mask(mouse,self),click if self.alpha==255 else None,click
@@ -202,12 +220,6 @@ class Screen:
         self.kor_font="malgungothic"
         self.pos=(0,0)
         self.is_screen=False
-
-    def update(self,*args):
-        pass
-
-    def blit(self,background):
-        background.blit(self.surface,self.pos)
 
 
 class Intro(Screen):
@@ -283,6 +295,11 @@ class Menu(Screen):
             if self.pos[0]==-setting.SIZE[0]//1.25:
                 self.now=setting.SCREEN.MAIN
                 self.direction=0
+
+        if self.pos[0]!=-setting.SIZE[0]//1.25:
+            for b in self.screens[setting.SCREEN.MAIN].buttons:
+                b.plus_alpha(-3)
+
         for s in self.screens: s.update()
 
     def blit(self,background):
@@ -336,6 +353,9 @@ class PlayMenu(Screen):
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 
+    def update(self):
+        pass
+
     def button_check(self,mouse,click):
         for button in self.buttons:
             button.rect.move_ip(setting.SIZE[0]-setting.SIZE[0]//1.25,0)
@@ -369,6 +389,9 @@ class SettingMenu(Screen):
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 
+    def update(self):
+        pass
+
     def blit(self,background):
         if self.is_screen:
             self.surface.fill(setting.WHITE)
@@ -400,6 +423,13 @@ class PauseScreen(Screen):
     def __init__(self):
         super().__init__()
 
+    def update(self):
+        pass
+
+def return_obs(args):
+    if args[0]=="rect": return Obstacle(*args)
+    else: return SpecialObs(*args)
+
 class Level:
     def __init__(self,name):
         path="assets/level/"+name+".csv"
@@ -414,8 +444,7 @@ class Level:
             for j in range(len(df_list[i])):
                 if str(df_list[i][j])=="nan":
                     df_list[i][j]=0
-        # self.obs_group=pygame.sprite.Group(*[Obstacle(*self.df.loc[i].to_dict().values()) for i in range(self.max_obs)])
-        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in df_list])
+        self.obs_group=pygame.sprite.Group(*[return_obs(i) for i in df_list])
         self.rewind=False
         self.progress=0
         self.player_angle=0
@@ -468,5 +497,3 @@ class Level:
 
 if __name__=="__main__":
     lv=Level("test_level")
-    for obs in lv.obs_group:
-        print(obs.rect.y)

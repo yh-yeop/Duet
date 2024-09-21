@@ -96,6 +96,7 @@ class Duet(Setting):
                             self.direction=1
                 if self.intro.is_screen:
                     if event.key==pygame.K_ESCAPE:
+                        print("인트로 스킵")
                         self.intro.skip=True
                 
                 if self.menu.is_screen:
@@ -107,16 +108,20 @@ class Duet(Setting):
                         print("플레이 메뉴(키보드)")
 
                 if event.key==pygame.K_0:
+                    print("플레이어 위치 초기화")
                     self.player.sprites()[0].angle=180
                     self.player.sprites()[1].angle=0
                 if event.key==pygame.K_1:
-                    Objects.box=not Objects.box
+                    Objects.onoff_box()
+                    print(f"박스: {Objects.box}")
                 if event.key==pygame.K_2:
                     for o in self.in_game.level.obs_group:
-                        o.invincible=not o.invincible
+                        o.onoff_invincible()
+                    print(f"무적: {self.in_game.level.obs_group.sprites()[0].invincible}")
                 if event.key==pygame.K_3:
                     self.direction=0
                     self.pause=not self.pause
+                    print(f"일시정지: {self.pause}")
 
 
             if event.type==pygame.KEYUP:
@@ -153,6 +158,7 @@ class Duet(Setting):
                         self.in_game.level=Level("test_level")
                         screen_change(self.screens,self.in_game)
                         self.menu.direction=0
+                        self.menu.now=self.SCREEN.MAIN
                         self.menu.pos=[-setting.SIZE[0]//1.25,0]
 
                 if self.intro.is_intro_done():
@@ -171,10 +177,10 @@ class Duet(Setting):
                             p.r=Player.r
                             p.distance=Player.distance
                             p.speed=2
-                if self.in_game.level.rewind:
-                    self.direction=0
-                elif self.menu.is_screen:
+                if self.menu.is_screen:
                     self.direction=1
+                elif self.in_game.level.rewind:
+                    self.direction=0
                 self.player.update(self.direction)
                 self.in_game.level.player_angle=self.player.sprites()[0].angle \
                     if min(tuple(map(lambda p: p.rect.x,self.player.sprites())))==self.player.sprites()[0].rect.x \
