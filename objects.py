@@ -20,6 +20,7 @@ class Objects(pygame.sprite.Sprite):
         self.rect.topleft=pos
         self.angle=angle
 
+
 class Player(Objects):
     speed=2
     r=12
@@ -406,7 +407,7 @@ class Level:
             self.df=pd.read_csv(path,encoding="cp949")
         except FileNotFoundError:
             try: self.df=pd.read_csv("Duet/"+path,encoding="cp949")
-            except FileNotFoundError: self.df=pd.read_csv("Duet-main/"+path,encoding="cp949")
+            except FileNotFoundError: self.df=pd.read_csv("./../Duet/"+path,encoding="cp949")
         self.max_obs=len(self.df)
         df_list=[list(self.df.loc[i].to_dict().values()) for i in range(self.max_obs)]
         for i in range(len(df_list)):
