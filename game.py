@@ -1,6 +1,6 @@
 import pygame
 from setting import Setting
-from objects import *
+from objects import Objects,Player,PlayerParticle,DeathParticle,Intro,Menu,InGame,Level,set_speed
 from util import *
 
 
@@ -29,6 +29,8 @@ class Duet(Setting):
                     "play_menu":None}
         
         self.play=True
+
+        self.gameover=False
 
     def init_pygame(self):
         pygame.init()
@@ -61,8 +63,6 @@ class Duet(Setting):
                     self.rewind_pause=False
                     for p in self.player: p.set_rewind_speed(self.in_game.level.player_angle)
                     self.in_game.level.rewind_change()
-        else:
-            print("일시정지")
         if not self.intro.is_screen:
             self.mouse_hitbox.rect.center=pygame.mouse.get_pos()
         dt=self.clock.tick(self.FRAME)
@@ -78,17 +78,18 @@ class Duet(Setting):
             self.check["main_menu"]=self.menu.screens[self.SCREEN.MAIN].button_check(self.mouse_hitbox,False)
             self.check["play_menu"]=self.menu.screens[self.SCREEN.PLAY].button_check(self.mouse_hitbox,False)
         for event in events:
-            if event.type==pygame.QUIT or \
-            (not self.in_game.is_screen and not self.intro.is_screen and event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):
+            if event.type==pygame.QUIT:
                 self.play=False
                 return
             if event.type==pygame.KEYDOWN:
                 if self.in_game.is_screen:
                     if event.key==pygame.K_ESCAPE:
-                        screen_change(self.screens,self.menu)
-                        for p in self.player:
-                            p.speed=2
-                        PlayerParticle.set_dy(0)
+                        if self.pause:
+                            screen_change(self.screens,self.menu)
+                            for p in self.player:
+                                p.speed=2
+                            PlayerParticle.set_dy(0)
+                            self.pause=False
                     if not self.pause and not self.rewind_pause:
                         if event.key==pygame.K_LEFT:
                             self.direction=-1

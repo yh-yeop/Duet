@@ -11,6 +11,7 @@ def set_speed(dt):
     global FRAME_SPEED
     FRAME_SPEED=dt/(1000//120)
 
+
 class Objects(pygame.sprite.Sprite):
     box=False
     def __init__(self,pos=Vector2(0,0),image=pygame.Surface((20,20)),angle=0):
@@ -26,6 +27,12 @@ class Objects(pygame.sprite.Sprite):
             cls.box=not cls.box
         else:
             cls.box=flag
+
+    def update(self,pos):
+        self.rect.topleft=pos
+    
+    def blit(self,background:pygame.Surface):
+        background.blit(self.image,self.rect)
 
 class Player(Objects):
     speed=2
@@ -59,6 +66,7 @@ class Player(Objects):
                 self.angle=round(self.angle)%360
                 # color=" red" if self.color==setting.RED else "blue"
                 # print(f"color: {color} angle: {self.angle}")
+                # # print(f"color: {" red" if self.color==setting.RED else "blue"} angle: {self.angle}")
         self.rect.center=self.center+Vector2(self.distance,0).rotate(self.angle)
         self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,self.angle))
         self.particle_group.update()
