@@ -183,12 +183,9 @@ class Obstacle(Objects):
                 print("충돌함")
                 if self.angle:
                     pygame.draw.rect(self.image,players[row[1]].color,(*row[0],5,5))
-
-                    angle_rad=math.radians(self.angle)
-                    original_x = row[0][0]*math.cos(-angle_rad) - row[0][1]*math.sin(-angle_rad)
-                    original_y = row[0][0]*math.sin(-angle_rad) + row[0][1]*math.cos(-angle_rad)
-                    blit_pos=Vector2(original_x,original_y)-Vector2(2.5,2.5)
-                    pygame.draw.rect(self.backup_image,players[row[1]].color,(*blit_pos,5,5))
+                    pygame.draw.rect(self.backup_image,players[row[1]].color,(*Vector2(*row[0]).rotate(-self.angle),5,5))
+                    print(f"row[0]: {row[0]}, Vector2(*row[0]).rotate(-self.angle): {Vector2(*row[0]).rotate(-self.angle)\
+                            },Vector2(*row[0]).rotate(-self.angle).rotate(self.angle): {Vector2(*row[0]).rotate(-self.angle).rotate(self.angle)}")
                 else:
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
         return re_value
