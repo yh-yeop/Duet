@@ -184,8 +184,7 @@ class Obstacle(Objects):
                 if self.angle:
                     pygame.draw.rect(self.image,players[row[1]].color,(*row[0],5,5))
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*Vector2(*row[0]).rotate(-self.angle),5,5))
-                    print(f"row[0]: {row[0]}, Vector2(*row[0]).rotate(-self.angle): {Vector2(*row[0]).rotate(-self.angle)\
-                            },Vector2(*row[0]).rotate(-self.angle).rotate(self.angle): {Vector2(*row[0]).rotate(-self.angle).rotate(self.angle)}")
+                    print(f"row[0]: {row[0]}, Vector2(*row[0]).rotate(-self.angle): {Vector2(*row[0]).rotate(-self.angle)},Vector2(*row[0]).rotate(-self.angle).rotate(self.angle): {Vector2(*row[0]).rotate(-self.angle).rotate(self.angle)}")
                 else:
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
         return re_value
