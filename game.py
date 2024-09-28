@@ -155,7 +155,7 @@ class Duet(Setting):
                         self.player.sprites()[0].angle=180
                         self.player.sprites()[1].angle=0
                         for p in self.player: p.speed=2.4 # 2.4
-                        PlayerParticle.set_dy(0.7)
+                        PlayerParticle.set_dy(0.9)
                         self.in_game.level=Level("test_level_2")
                         screen_change(self.screens,self.in_game)
                         self.menu.direction=0

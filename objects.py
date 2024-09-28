@@ -151,6 +151,7 @@ class Obstacle(Objects):
         self.invincible=False
         self.pos=list(self.rect.center)
         self.backup_image=self.image.copy()
+        self.mask=pygame.mask.from_surface(self.image)
 
     def onoff_invincible(self,flag=None):
         if flag==None:
@@ -167,6 +168,7 @@ class Obstacle(Objects):
         if self.angle:
             self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
             self.rect=self.image.get_rect(center=self.pos)
+            self.mask=pygame.mask.from_surface(self.image)
         else:
             self.image=self.backup_image
         if self.rect.y>=setting.CENTER[1]:
@@ -174,17 +176,20 @@ class Obstacle(Objects):
             if self.dy_plus: self.dy+=self.dy_plus*speed*FRAME_SPEED
 
     def collide_check(self,players):
-        re_value=[(pygame.sprite.collide_mask(self,players[i]),i) for i in range(2)]
-        if self.invincible:
+        if self.invincible or -400>Vector2(*self.rect.center).distance_to(setting.PLAYER_CENTER["ingame"])>600:
             re_value=[]
             return re_value
+        else:
+            re_value=[(pygame.sprite.collide_mask(self,players[i]),i) for i in range(2)]
         for row in re_value:
             if row[0]:
                 print("충돌함")
                 if self.angle:
-                    pygame.draw.rect(self.image,players[row[1]].color,(*row[0],5,5))
-                    pygame.draw.rect(self.backup_image,players[row[1]].color,(*Vector2(*row[0]).rotate(-self.angle),5,5))
-                    print(f"row[0]: {row[0]}, Vector2(*row[0]).rotate(-self.angle): {Vector2(*row[0]).rotate(-self.angle)},Vector2(*row[0]).rotate(-self.angle).rotate(self.angle): {Vector2(*row[0]).rotate(-self.angle).rotate(self.angle)}")
+                    pygame.draw.rect(self.image,players[row[1]].color,(*(Vector2(*row[0])-Vector2(10,10)),20,20))
+                    rotate_pos=Vector2(*self.rect.center)+ \
+                        Vector2(round((Vector2(*self.rect.topleft)-Vector2(*self.rect.center)).distance_to(Vector2(row[0]))),0).rotate(-self.angle)
+                    pygame.draw.rect(self.backup_image,players[row[1]].color,(*rotate_pos,20,20))
+                    print(f"row[0]: {row[0]}, Vector2(*row[0]).rotate(-self.angle): {Vector2(*row[0]).rotate(-self.angle)}")
                 else:
                     pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
         return re_value
@@ -202,6 +207,7 @@ class Button(Objects):
     def __init__(self,image,pos=Vector2(0,0)):
         self.image=image.convert_alpha()
         self.alpha=255
+        self.mask=pygame.mask.from_surface(self.image)
         super().__init__(pos,self.image)
 
     def plus_alpha(self,plus):
@@ -442,8 +448,8 @@ class Level:
         except FileNotFoundError:
             try: self.df=pd.read_csv("Duet/"+path,encoding="cp949")
             except FileNotFoundError: self.df=pd.read_csv("./../Duet/"+path,encoding="cp949")
-        self.max_obs=len(self.df)
-        df_list=[list(self.df.loc[i].to_dict().values()) for i in range(self.max_obs)]
+        max_obs=len(self.df)
+        df_list=[list(self.df.loc[i].to_dict().values()) for i in range(max_obs)]
         for i in range(len(df_list)):
             for j in range(len(df_list[i])):
                 if str(df_list[i][j])=="nan":
@@ -455,6 +461,7 @@ class Level:
         self.pause_tick=0
 
     def update(self):
+        # print(round(min([Vector2(*o.rect.center).distance_to(setting.PLAYER_CENTER["ingame"]) for o in self.obs_group]),2))
         if not self.pause_tick:
             if self.rewind:
                 for o in self.obs_group: o.update(-self.progress/(setting.FRAME*0.8))
@@ -467,7 +474,7 @@ class Level:
             else:
                 for o in self.obs_group: o.update()
                 self.progress+=1
-
+ 
             if self.obs_group.sprites()[-1].rect.top>setting.SIZE[1]:
                 self.rewind_change()
         else:
@@ -479,9 +486,9 @@ class Level:
         for o in self.obs_group: o.invincible=flag
         if not flag:
             self.pause_tick=setting.FRAME*0.2
-            PlayerParticle.set_dy(0.7)
+            PlayerParticle.set_dy(0.9)
         else:
-            PlayerParticle.set_dy(-0.7*self.progress/(setting.FRAME*0.8))
+            PlayerParticle.set_dy(-0.9*self.progress/(setting.FRAME*0.8))
             
 
     def collide_check(self,players):
