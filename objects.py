@@ -142,9 +142,9 @@ class Obstacle(Objects):
         """shape: [rect,special]
             special: [1,2]"""
             # args[i]=string_to_int(args[i])
-        self.shape,self.dx,self.dy,self.x,self.y,self.w,self.h,\
+        shape,self.dx,self.dy,self.x,self.y,self.w,self.h,\
             self.angle,self.angle_plus,self.dx_plus,self.dy_plus=args
-        if self.shape=="rect": image=pygame.Surface((self.w,self.h),pygame.SRCALPHA)
+        if shape=="rect": image=pygame.Surface((self.w,self.h),pygame.SRCALPHA)
         else: raise SyntaxError
         image.fill(setting.WHITE)
         super().__init__(Vector2(self.x,self.y),image,self.angle)
@@ -152,6 +152,9 @@ class Obstacle(Objects):
         self.pos=list(self.rect.center)
         self.backup_image=self.image.copy()
         self.mask=pygame.mask.from_surface(self.image)
+
+    def reset(self):
+        self.backup_image.fill(setting.WHITE)
 
     def onoff_invincible(self,flag=None):
         if flag==None:
@@ -184,14 +187,25 @@ class Obstacle(Objects):
         for row in re_value:
             if row[0]:
                 print("충돌함")
+                paint=pygame.Surface((20,20))
+                paint.fill(players[row[1]].color)
                 if self.angle:
-                    pygame.draw.rect(self.image,players[row[1]].color,(*(Vector2(*row[0])-Vector2(10,10)),20,20))
-                    rotate_pos=Vector2(*self.rect.center)+ \
-                        Vector2(round((Vector2(*self.rect.topleft)-Vector2(*self.rect.center)).distance_to(Vector2(row[0]))),0).rotate(-self.angle)
-                    pygame.draw.rect(self.backup_image,players[row[1]].color,(*rotate_pos,20,20))
-                    print(f"row[0]: {row[0]}, Vector2(*row[0]).rotate(-self.angle): {Vector2(*row[0]).rotate(-self.angle)}")
+                    # # pygame.draw.rect(self.image,players[row[1]].color,(*(VVector2(*row[0])-Vector2(10,10)),20,20))
+                    # # distance=math.sqrt(math.pow(Vector2(*self.rect.center).distance_to((Vector2(*row)+Vector2(self.rect.topleft))),2)-math.pow(self.h//2,2))
+                    # distance=math.sqrt((Vector2(*self.rect.center).distance_to((Vector2(*row[0])+Vector2(self.rect.topleft))))**2-(self.h//2)**2)
+                    # if self.angle>0:
+                    #     distance=self.w-distance
+                    # plus_distance=-Vector2(35,10) if self.angle>0 else Vector2(10,-10)
+                    # self.backup_image.blit(paint,(Vector2(distance,self.h)+plus_distance))
+                    rotate_pos=(Vector2(self.rect.topleft)-Vector2(self.rect.center))+Vector2(round(Vector2(self.rect.topleft)-Vector2(self.rect.center)).distance_to(Vector2(row[0])),0).rotate(-self.angle)
+                    self.backup_image.blit(paint,rotate_pos-Vector2(0,10))
+
+                    
+                    self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
+                    
+                
                 else:
-                    pygame.draw.rect(self.backup_image,players[row[1]].color,(*(Vector2(row[0])-Vector2(2.5,2.5)),5,5))
+                    self.backup_image.blit(paint,Vector2(*row[0])-Vector2(10,10))
         return re_value
     
     def blit(self,background):

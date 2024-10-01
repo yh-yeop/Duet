@@ -123,6 +123,10 @@ class Duet(Setting):
                     self.direction=0
                     self.pause=not self.pause
                     print(f"일시정지: {self.pause}")
+                if event.key==pygame.K_4:
+                    print("장애물 페인트 초기화")
+                    for o in self.in_game.level.obs_group:
+                        o.reset()
 
 
             if event.type==pygame.KEYUP:
@@ -141,7 +145,6 @@ class Duet(Setting):
         if not self.pause:
             if not self.rewind_pause:
                 for screen in self.screens: screen.update()
-
                 if self.check["main_menu"]:
                     if all(self.check["main_menu"][self.BUTTON.PLAY]):
                         self.menu.set_direction(-1)
