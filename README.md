@@ -81,7 +81,7 @@ TODO 리스트 만들기
     * Java
         * 객체지향에 대해 설명 잘해줌
 
-    * design patern
+    * design patt ern
         * 디자인 패턴에 대해 설명 잘해줌
 
 
