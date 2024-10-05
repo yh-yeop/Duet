@@ -38,6 +38,12 @@ class Duet(Setting):
         pygame.display.set_caption("Duet")
         icon=return_image("icon.jpg")
         pygame.display.set_icon(icon)
+        try: pygame.mixer.music.load("assets/sound/Theme_from_Duet.mp3")
+        except pygame.error:
+            try: pygame.mixer.music.load("Duet/assets/sound/Theme_from_Duet.mp3")
+            except pygame.error: pygame.mixer.music.load("./../Duet/assets/sound/Theme_from_Duet.mp3")
+        pygame.mixer.music.play(-1)
+        
 
     def mainloop(self):
         while True:

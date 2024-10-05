@@ -190,15 +190,8 @@ class Obstacle(Objects):
                 paint=pygame.Surface((20,20))
                 paint.fill(players[row[1]].color)
                 if self.angle:
-                    # # pygame.draw.rect(self.image,players[row[1]].color,(*(VVector2(*row[0])-Vector2(10,10)),20,20))
-                    # # distance=math.sqrt(math.pow(Vector2(*self.rect.center).distance_to((Vector2(*row)+Vector2(self.rect.topleft))),2)-math.pow(self.h//2,2))
-                    # distance=math.sqrt((Vector2(*self.rect.center).distance_to((Vector2(*row[0])+Vector2(self.rect.topleft))))**2-(self.h//2)**2)
-                    # if self.angle>0:
-                    #     distance=self.w-distance
-                    # plus_distance=-Vector2(35,10) if self.angle>0 else Vector2(10,-10)
-                    # self.backup_image.blit(paint,(Vector2(distance,self.h)+plus_distance))
-                    rotate_pos=(Vector2(self.rect.topleft)-Vector2(self.rect.center))+Vector2(round(Vector2(self.rect.topleft)-Vector2(self.rect.center)).distance_to(Vector2(row[0])),0).rotate(-self.angle)
-                    self.backup_image.blit(paint,rotate_pos-Vector2(0,10))
+                    rotate_pos=(Vector2(row[0])+Vector2(self.rect.topleft)).rotate(-self.angle)
+                    self.backup_image.blit(paint,(rotate_pos-Vector2(self.rect.topleft)))
 
                     
                     self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
