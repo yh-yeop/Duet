@@ -1,11 +1,12 @@
 import pygame
 from setting import Setting
-from objects import Objects,Player,PlayerParticle,DeathParticle,Intro,Menu,InGame,Level,set_speed
+from objects import Objects,Hitbox,Player,PlayerParticle,DeathParticle,Intro,Menu,InGame,Level,set_speed
 from util import *
 
 
 class Duet(Setting):
     def __init__(self):
+        print("1: 박스 활성화/비활성화\n2: 무적 활성화/비활성화\n3: 일시정지 활성화/비활성화\n4: 장애물 페인트 초기화\nesc: 인트로 스킵, 메뉴로 나가기(일시정지 중에만)")
         super().__init__()
         self.init_pygame()
         self.player=pygame.sprite.Group(Player(self.RED,self.PLAYER_CENTER["menu"],"left"),
@@ -23,7 +24,7 @@ class Duet(Setting):
         self.in_game=InGame()
         self.screens=[self.intro,self.menu,self.in_game]
 
-        self.mouse_hitbox=Objects(pygame.mouse.get_pos(),pygame.Surface((1,1)))
+        self.mouse_hitbox=Hitbox(pygame.mouse.get_pos(),pygame.Surface((1,1)))
 
         self.check={"main_menu":None,
                     "play_menu":None}
@@ -70,7 +71,7 @@ class Duet(Setting):
                     for p in self.player: p.set_rewind_speed(self.in_game.level.player_angle)
                     self.in_game.level.rewind_change()
         if not self.intro.is_screen:
-            self.mouse_hitbox.rect.center=pygame.mouse.get_pos()
+            self.mouse_hitbox.update(pygame.mouse.get_pos())
         dt=self.clock.tick(self.FRAME)
         set_speed(dt)
         # fps=1000/dt
@@ -96,7 +97,7 @@ class Duet(Setting):
                                 p.speed=2
                             PlayerParticle.set_dy(0)
                             self.pause=False
-                    if not self.pause and not self.rewind_pause:
+                    if not (self.pause or self.rewind_pause):
                         if event.key==pygame.K_LEFT:
                             self.direction=-1
                         if event.key==pygame.K_RIGHT:
@@ -133,6 +134,10 @@ class Duet(Setting):
                     print("장애물 페인트 초기화")
                     for o in self.in_game.level.obs_group:
                         o.reset()
+                if event.key==pygame.K_5:
+                    print("테스트 페인트 초기화")
+                    for o in self.in_game.level.obs_group:
+                        o.reset2()
 
 
             if event.type==pygame.KEYUP:
@@ -165,7 +170,7 @@ class Duet(Setting):
                         self.player.sprites()[1].angle=0
                         for p in self.player: p.speed=2.4 # 2.4
                         PlayerParticle.set_dy(0.9)
-                        self.in_game.level=Level("test_level_2")
+                        self.in_game.level=Level("test_level_3")
                         screen_change(self.screens,self.in_game)
                         self.menu.direction=0
                         self.menu.now=self.SCREEN.MAIN
@@ -224,6 +229,13 @@ class Duet(Setting):
 
         for screen in self.screens:
             screen.blit(self.background)
+
+        for o in self.in_game.level.obs_group:
+            if o.collide_pos!=[]:
+                paint=pygame.Surface((20,20))
+                paint.fill((66,255,37))
+                for angle,pos in o.collide_pos:
+                    self.background.blit(paint,pos)
         
         pygame.display.flip()   
 

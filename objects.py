@@ -31,8 +31,19 @@ class Objects(pygame.sprite.Sprite):
     def update(self,pos):
         self.rect.topleft=pos
     
-    def blit(self,background:pygame.Surface):
+    def blit(self,background):
         background.blit(self.image,self.rect)
+
+
+class Hitbox(Objects):
+    def __init__(self, pos=Vector2(0, 0), image=pygame.Surface((20, 20)), angle=0):
+        super().__init__(pos, image, angle)
+    
+    def update(self,pos):
+        self.rect.center=pos
+
+    def blit(self,background):
+        super().blit(background)
 
 class Player(Objects):
     speed=2
@@ -42,7 +53,7 @@ class Player(Objects):
         self.center=Vector2(center)
         self.angle=180 if direction=="left" else 0
         pos=self.center+Vector2(self.distance,0).rotate(self.angle)
-        self.image=pygame.Surface((5,5),pygame.SRCALPHA)
+        self.image=pygame.Surface((1,1),pygame.SRCALPHA)
         pygame.draw.rect(self.image,setting.WHITE,(0,0,*self.image.get_size()),1)
         super().__init__(pos,self.image,self.angle)
         
@@ -128,13 +139,18 @@ class DeathParticle(Particle):
     def __init__(self, color,pos=Vector2(0, 0)):
         super().__init__(color,(10,10),pos)
         self.dx=(np.random.randint(0,1000)-500)/1000
+        self.dy=-np.random.randint(500,2000)/1000
+        self.pos=Vector2(self.rect.topleft)
         """
-            -500~500 / 1000 = -0.5~0.5 (좀더 많은 갯수)
+            -500~500 / 1000 = -0.5~0.5 (좀더 많은 경우의 수)
             -50~50 / 100 = -0.5~0.5
         """
 
     def update(self):
         super().update()
+        self.dy+=0.01
+        self.pos+=Vector2(self.dx,self.dy)
+        self.rect.topleft=self.pos
 
 
 class Obstacle(Objects):
@@ -152,9 +168,12 @@ class Obstacle(Objects):
         self.pos=list(self.rect.center)
         self.backup_image=self.image.copy()
         self.mask=pygame.mask.from_surface(self.image)
+        self.collide_pos=[]
 
     def reset(self):
         self.backup_image.fill(setting.WHITE)
+    def reset2(self):
+        self.collide_pos=[]
 
     def onoff_invincible(self,flag=None):
         if flag==None:
@@ -190,8 +209,18 @@ class Obstacle(Objects):
                 paint=pygame.Surface((20,20))
                 paint.fill(players[row[1]].color)
                 if self.angle:
-                    rotate_pos=(Vector2(row[0])+Vector2(self.rect.topleft)).rotate(-self.angle)
-                    self.backup_image.blit(paint,(rotate_pos-Vector2(self.rect.topleft)))
+                    rotate_pos=Vector2(row[0]).rotate(-self.angle)
+                    self.collide_pos.append((0,Vector2(row[0])+Vector2(self.rect.topleft)-Vector2(10,10)))
+                    self.collide_pos.append((-self.angle,Vector2(row[0]).rotate(-self.angle)+Vector2(self.rect.topleft)-Vector2(27.5,-7.5)))
+                    """
+                    px, py = row  # row[0] 좌표
+                    theta = math.radians(-self.angle)  # -self.angle을 라디안으로 변환
+
+                    # 회전된 좌표 계산
+                    rotated_x = (px * math.cos(theta)) - (py * math.sin(theta))
+                    rotated_y = (px * math.sin(theta)) + (py * math.cos(theta))
+                    """
+                    self.backup_image.blit(paint,rotate_pos-Vector2(27.5,-7.5))
 
                     
                     self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
@@ -204,7 +233,8 @@ class Obstacle(Objects):
     def blit(self,background):
         background.blit(self.image,self.rect)
         if self.box:
-            pygame.draw.rect(background,(255,0,0),self.rect,1)
+            background.blit(self.backup_image,self.rect)
+            # pygame.draw.rect(background,(255,0,0),self.rect,1)
 
 class SpecialObs(Obstacle):
     def __init__(self, *args):
@@ -237,6 +267,12 @@ class Screen:
         self.kor_font="malgungothic"
         self.pos=(0,0)
         self.is_screen=False
+
+    def update(self):
+        pass
+
+    def blit(self,background):
+        background.blit(self.surface,self.pos)
 
 
 class Intro(Screen):

@@ -1,3 +1,2 @@
 shape,dx,dy,x,y,w,h,angle,angle_plus,dx_plus,dy_plus
-rect, 0, 2,   60,  -100,  80, 30, 0, 0, 0, 0
-rect, 0, 0,  450, -10050,  80, 30, 360, 2, 0, 0
+rect,0,2,0,-500,230,35,45,0,,
