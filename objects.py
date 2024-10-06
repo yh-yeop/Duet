@@ -226,7 +226,8 @@ class Obstacle(Objects):
                 if self.angle:
                     rotate_pos=Vector2(row[0]).rotate(-self.angle)
                     self.collide_pos.append((0,Vector2(row[0])+Vector2(self.rect.topleft)-Vector2(10,10)))
-                    self.collide_pos.append((-self.angle,Vector2(row[0]).rotate(-self.angle)+Vector2(self.rect.topleft)-Vector2(27.5,-7.5)))
+                    self.collide_pos.append((-self.angle,rotate_pos+Vector2(self.rect.topleft)-Vector2(27.5,-7.5)))
+                    self.collide_pos.append((-self.angle,rotate_pos+Vector2(self.rect.topleft)))
 
                     self.backup_image.blit(paint,rotate_pos-Vector2(27.5,-7.5))
 
