@@ -20,6 +20,7 @@ class Objects(pygame.sprite.Sprite):
         self.rect=self.image.get_rect()
         self.rect.topleft=pos
         self.angle=angle
+        self.mask=pygame.mask.from_surface(self.image)
 
     @classmethod
     def onoff_box(cls,flag=None):
@@ -61,23 +62,32 @@ class Player(Objects):
         self.color=color
         self.particle_group=pygame.sprite.Group()
         self.rewind=[None,0]
+        self.death_tick=0
+        self.death_particle_group=pygame.sprite.Group()
 
     def set_rewind_speed(self,angle):
         self.rewind[1]=setting.FRAME*0.8
         self.rewind[0]=(540-angle)/self.rewind[1]
 
-    
+
+    def die(self):
+        self.death_tick=84
+        for _ in range(50): self.death_particle_group.add(DeathParticle(self.color,self.rect.center))
+
     def update(self,angle_plus):
-        if not self.rewind[1]:
-            self.angle=(self.angle+angle_plus*self.speed*FRAME_SPEED)%360
-        else:
-            self.angle=(self.angle+self.rewind[0])%360
-            self.rewind[1]-=1
+        if not self.death_tick:
             if not self.rewind[1]:
-                self.angle=round(self.angle)%360
-                # color=" red" if self.color==setting.RED else "blue"
-                # print(f"color: {color} angle: {self.angle}")
-                # # print(f"color: {" red" if self.color==setting.RED else "blue"} angle: {self.angle}")
+                self.angle=(self.angle+angle_plus*self.speed*FRAME_SPEED)%360
+            else:
+                self.angle=(self.angle+self.rewind[0])%360
+                self.rewind[1]-=1
+                if not self.rewind[1]:
+                    self.angle=round(self.angle)%360
+                    # color=" red" if self.color==setting.RED else "blue"
+                    # print(f"color: {color} angle: {self.angle}")
+                    # # print(f"color: {" red" if self.color==setting.RED else "blue"} angle: {self.angle}")
+        else:
+            self.death_tick-=1
         self.rect.center=self.center+Vector2(self.distance,0).rotate(self.angle)
         self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,self.angle))
         self.particle_group.update()
@@ -86,11 +96,13 @@ class Player(Objects):
                 self.particle_group.remove(p)
 
 
-
     def blit(self,background):
         player_surface=pygame.Surface(setting.SIZE,pygame.SRCALPHA)
         for p in self.particle_group: p.blit(player_surface)
-        pygame.draw.circle(player_surface,(*self.color,self.alpha),self.rect.topleft,self.r)
+        if not self.death_tick: pygame.draw.circle(player_surface,(*self.color,self.alpha),self.rect.topleft,self.r)
+        else:
+            for dp in self.death_particle_group: dp.blit(player_surface)
+
         if self.box:
             box=self.rect.copy()
             box.center=box.topleft
@@ -152,6 +164,9 @@ class DeathParticle(Particle):
         self.pos+=Vector2(self.dx,self.dy)
         self.rect.topleft=self.pos
 
+    def blit(self,background):
+        background.blit(self.image,self.rect)
+
 
 class Obstacle(Objects):
     def __init__(self,*args):
@@ -212,14 +227,7 @@ class Obstacle(Objects):
                     rotate_pos=Vector2(row[0]).rotate(-self.angle)
                     self.collide_pos.append((0,Vector2(row[0])+Vector2(self.rect.topleft)-Vector2(10,10)))
                     self.collide_pos.append((-self.angle,Vector2(row[0]).rotate(-self.angle)+Vector2(self.rect.topleft)-Vector2(27.5,-7.5)))
-                    """
-                    px, py = row  # row[0] 좌표
-                    theta = math.radians(-self.angle)  # -self.angle을 라디안으로 변환
 
-                    # 회전된 좌표 계산
-                    rotated_x = (px * math.cos(theta)) - (py * math.sin(theta))
-                    rotated_y = (px * math.sin(theta)) + (py * math.cos(theta))
-                    """
                     self.backup_image.blit(paint,rotate_pos-Vector2(27.5,-7.5))
 
                     
