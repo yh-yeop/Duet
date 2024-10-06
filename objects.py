@@ -30,10 +30,10 @@ class Objects(pygame.sprite.Sprite):
             cls.box=flag
 
     def update(self,pos):
-        self.rect.topleft=pos
+        pass
     
     def blit(self,background):
-        background.blit(self.image,self.rect)
+        pass
 
 
 class Hitbox(Objects):
@@ -44,7 +44,7 @@ class Hitbox(Objects):
         self.rect.center=pos
 
     def blit(self,background):
-        super().blit(background)
+        background.blit(self.image,self.rect)
 
 class Player(Objects):
     speed=2
@@ -279,9 +279,8 @@ class Screen:
     def update(self):
         pass
 
-    def blit(self,background):
-        background.blit(self.surface,self.pos)
-
+    def blit(self,*args):
+        pass
 
 class Intro(Screen):
     def __init__(self):
