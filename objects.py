@@ -77,7 +77,6 @@ class Player(Objects):
         for dp in self.death_particle_group:
             if not (dp.rect.x in range(setting.SIZE[0]+1) and dp.rect.y in range(setting.SIZE[1]+1)):
                 self.death_particle_group.remove(dp)
-        print(len(self.death_particle_group))
         for p in self.particle_group:
             if (not p.image.get_alpha()) or (not p.size):
                 self.particle_group.remove(p)
@@ -206,7 +205,7 @@ class Obstacle(Objects):
                     self.collide_pos.append((0,Vector2(row[0])+Vector2(self.rect.topleft)-Vector2(10,10)))
                     self.collide_pos.append((-self.angle,rotate_pos+Vector2(self.rect.topleft)-Vector2(27.5,-7.5)))
                     self.collide_pos.append((-self.angle,rotate_pos+Vector2(self.rect.topleft)))
-                    self.backup_image.blit(paint,rotate_pos-Vector2(27.5,-7.5))
+                    self.backup_image.blit(paint,rotate_pos-Vector2(10,10)+Vector2(-17.5,17.5))
                     # 10 * 7/4
                     # 7/4의 기원. 아마도 45도가 아니라 135도를 돌려서 생긴 숫자
                     # 45도였으면 3/4였을것
