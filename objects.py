@@ -1,10 +1,12 @@
 import pygame
-from setting import Setting
 from pygame.math import Vector2
+from setting import Setting
 from util import *
+from abstract_objects import Objects,Screen,Particle
 import pandas as pd
 import numpy as np
 import math
+
 setting=Setting()
 FRAME_SPEED=(1000//setting.FRAME)/(1000//120)
 def set_speed(dt):
@@ -12,33 +14,9 @@ def set_speed(dt):
     FRAME_SPEED=dt/(1000//120)
 
 
-class Objects(pygame.sprite.Sprite):
-    box=False
-    def __init__(self,pos=Vector2(0,0),image=pygame.Surface((20,20)),angle=0):
-        pygame.sprite.Sprite.__init__(self)
-        self.image=image
-        self.rect=self.image.get_rect()
-        self.rect.topleft=pos
-        self.angle=angle
-        self.mask=pygame.mask.from_surface(self.image)
-
-    @classmethod
-    def onoff_box(cls,flag=None):
-        if flag==None:
-            cls.box=not cls.box
-        else:
-            cls.box=flag
-
-    def update(self,pos):
-        pass
-    
-    def blit(self,background):
-        pass
-
-
 class Hitbox(Objects):
-    def __init__(self, pos=Vector2(0, 0), image=pygame.Surface((20, 20)), angle=0):
-        super().__init__(pos, image, angle)
+    def __init__(self,pos=Vector2(0,0),image=pygame.Surface((20,20)),angle=0):
+        super().__init__(pos,image,angle)
     
     def update(self,pos):
         self.rect.center=pos
@@ -69,6 +47,10 @@ class Player(Objects):
         self.rewind[1]=setting.FRAME*0.8
         self.rewind[0]=(540-angle)/self.rewind[1]
 
+    def change_center(self,screen):
+        func=min if screen=="ingame" else max
+        self.center[1]=func(setting.PLAYER_CENTER["ingame"][1]-setting.PLAYER_CENTER["menu"][1]/(setting.FRAME*0.8),setting.PLAYER_CENTER[screen])
+        
 
     def die(self):
         self.death_tick=84
@@ -91,6 +73,11 @@ class Player(Objects):
         self.rect.center=self.center+Vector2(self.distance,0).rotate(self.angle)
         self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,self.angle))
         self.particle_group.update()
+        self.death_particle_group.update()
+        for dp in self.death_particle_group:
+            if not (dp.rect.x in range(setting.SIZE[0]+1) and dp.rect.y in range(setting.SIZE[1]+1)):
+                self.death_particle_group.remove(dp)
+        print(len(self.death_particle_group))
         for p in self.particle_group:
             if (not p.image.get_alpha()) or (not p.size):
                 self.particle_group.remove(p)
@@ -99,9 +86,9 @@ class Player(Objects):
     def blit(self,background):
         player_surface=pygame.Surface(setting.SIZE,pygame.SRCALPHA)
         for p in self.particle_group: p.blit(player_surface)
-        if not self.death_tick: pygame.draw.circle(player_surface,(*self.color,self.alpha),self.rect.topleft,self.r)
-        else:
-            for dp in self.death_particle_group: dp.blit(player_surface)
+        for dp in self.death_particle_group: dp.blit(player_surface)
+        if not self.death_tick:
+            pygame.draw.circle(player_surface,(*self.color,self.alpha),self.rect.topleft,self.r)
 
         if self.box:
             box=self.rect.copy()
@@ -109,30 +96,13 @@ class Player(Objects):
             player_surface.blit(self.image,box.topleft)
         background.blit(player_surface,(0,0))
 
-class Particle(Objects):
-    def __init__(self,color,size,pos=Vector2(0,0),angle=0):
-        self.image=pygame.Surface(size,pygame.SRCALPHA)
-        self.color=color
-        self.image.fill(self.color)
-        self.alpha=128
-        self.size=1
-        super().__init__(pos,self.image,angle)
-        self.blit_image=self.image.copy()
-
-    def update(self):
-        self.size=max(self.size-0.01*FRAME_SPEED,0)
-        self.alpha=max(self.alpha-2.5*FRAME_SPEED,0)
-        self.blit_image=pygame.transform.rotozoom(self.image,self.angle,self.size)
-
-    def blit(self,background):
-        blit_pos=Vector2(*self.rect.topleft)-Vector2(*self.blit_image.get_size())//2
-        background.blit(self.blit_image,blit_pos)
-
 class PlayerParticle(Particle):
     dy=0
     def __init__(self, color, pos=Vector2(0,0),angle=0):
         super().__init__(color,(17,10),pos,angle)
         self.image=pygame.transform.rotozoom(self.image,self.angle,1)
+        self.blit_image=self.image.copy()
+        self.alpha=128
 
     @classmethod
     def set_dy(cls,dy):
@@ -141,26 +111,34 @@ class PlayerParticle(Particle):
         
     def update(self):
         super().update()
-        self.blit_image.set_alpha(self.alpha)
         self.rect.y+=PlayerParticle.dy*FRAME_SPEED
+        self.size=max(self.size-0.01*FRAME_SPEED,0)
+        self.alpha=max(self.alpha-2.5*FRAME_SPEED,0)
+        self.blit_image=pygame.transform.rotozoom(self.image,self.angle,self.size)
+        self.blit_image.set_alpha(self.alpha)
 
-
+    def blit(self,background):
+        blit_pos=Vector2(*self.rect.topleft)-Vector2(*self.blit_image.get_size())//2
+        background.blit(self.blit_image,blit_pos)
 
 
 class DeathParticle(Particle):
-    def __init__(self, color,pos=Vector2(0, 0)):
-        super().__init__(color,(10,10),pos)
-        self.dx=(np.random.randint(0,1000)-500)/1000
-        self.dy=-np.random.randint(500,2000)/1000
+    def __init__(self, color,pos=Vector2(0,0)):
+        super().__init__(color,(3,3),pos)
+        self.dx=(np.random.randint(0,2400)-1200)/1000
+        self.dy=-np.random.randint(1500,5000)/1000
         self.pos=Vector2(self.rect.topleft)
+        self.alpha=np.random.randint(128,255)
         """
-            -500~500 / 1000 = -0.5~0.5 (좀더 많은 경우의 수)
-            -50~50 / 100 = -0.5~0.5
+            -500~500 / 1000 = -1.0~1.0 (좀더 많은 경우의 수)
+            -50~50 / 100 = -1.5~5.0
         """
 
     def update(self):
         super().update()
-        self.dy+=0.01
+        self.dy+=0.025
+        self.alpha=max(self.alpha-0.1,0)
+        self.image.set_alpha(self.alpha)
         self.pos+=Vector2(self.dx,self.dy)
         self.rect.topleft=self.pos
 
@@ -228,8 +206,10 @@ class Obstacle(Objects):
                     self.collide_pos.append((0,Vector2(row[0])+Vector2(self.rect.topleft)-Vector2(10,10)))
                     self.collide_pos.append((-self.angle,rotate_pos+Vector2(self.rect.topleft)-Vector2(27.5,-7.5)))
                     self.collide_pos.append((-self.angle,rotate_pos+Vector2(self.rect.topleft)))
-
                     self.backup_image.blit(paint,rotate_pos-Vector2(27.5,-7.5))
+                    # 10 * 7/4
+                    # 7/4의 기원. 아마도 45도가 아니라 135도를 돌려서 생긴 숫자
+                    # 45도였으면 3/4였을것
 
                     
                     self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
@@ -244,10 +224,6 @@ class Obstacle(Objects):
         if self.box:
             background.blit(self.backup_image,self.rect)
             # pygame.draw.rect(background,(255,0,0),self.rect,1)
-
-class SpecialObs(Obstacle):
-    def __init__(self, *args):
-        super().__init__(*args)
 
 class Button(Objects):
     def __init__(self,image,pos=Vector2(0,0)):
@@ -266,22 +242,6 @@ class Button(Objects):
         background.blit(self.image,self.rect.topleft)
         if self.box:
             pygame.draw.rect(background,(255,0,0),self.rect,1)
-
-
-
-class Screen:
-    def __init__(self,size=setting.SIZE):
-        self.surface=pygame.Surface(size,pygame.SRCALPHA)
-        self.eng_font="Montserrat/static/Montserrat-Thin.ttf"
-        self.kor_font="malgungothic"
-        self.pos=(0,0)
-        self.is_screen=False
-
-    def update(self):
-        pass
-
-    def blit(self,*args):
-        pass
 
 class Intro(Screen):
     def __init__(self):
@@ -464,6 +424,9 @@ class InGame(Screen):
         super().__init__()
         self.level=Level("test_level")
 
+    def set_level(self,name):
+        self.level=Level(name)
+
     def update(self):
         if self.is_screen:
             self.level.update()
@@ -487,10 +450,6 @@ class PauseScreen(Screen):
     def update(self):
         pass
 
-def return_obs(args):
-    if args[0]=="rect": return Obstacle(*args)
-    else: return SpecialObs(*args)
-
 class Level:
     def __init__(self,name):
         path="assets/level/"+name+".csv"
@@ -505,7 +464,7 @@ class Level:
             for j in range(len(df_list[i])):
                 if str(df_list[i][j])=="nan":
                     df_list[i][j]=0
-        self.obs_group=pygame.sprite.Group(*[return_obs(i) for i in df_list])
+        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in df_list])
         self.rewind=False
         self.progress=0
         self.player_angle=0
@@ -554,8 +513,3 @@ class Level:
     def blit(self,background):
         for obs in self.obs_group:
             obs.blit(background)
-
-
-
-if __name__=="__main__":
-    lv=Level("test_level")

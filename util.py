@@ -42,6 +42,7 @@ def draw_player(player,background,screen):
     pos=setting.PLAYER_CENTER[screen]
     draw_player_circle(background,center=pos)
     for p in player:
+        # p.change_center(screen)
         p.center=pos
         p.blit(background)
 
@@ -49,4 +50,3 @@ def draw_player(player,background,screen):
 def screen_change(screens,screen):
     for s in screens: s.is_screen=False
     screens[screens.index(screen)].is_screen=True
-    return screens
