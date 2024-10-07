@@ -445,6 +445,9 @@ class InGame(Screen):
 class PauseScreen(Screen):
     def __init__(self):
         super().__init__()
+        self.buttons=[Button,
+                      Button(return_image("play.png",(self.button_size,self.button_size)),[setting.SIZE[0]-20-self.button_size,setting.SIZE[1]])]
+
 
     def update(self):
         pass

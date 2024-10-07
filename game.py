@@ -1,6 +1,6 @@
 import pygame
 from setting import Setting
-from objects import Objects,Hitbox,Player,PlayerParticle,Intro,Menu,InGame,Level,set_speed
+from objects import Objects,Hitbox,Player,PlayerParticle,Intro,Menu,InGame,set_speed,PauseScreen
 from util import *
 
 
@@ -22,6 +22,7 @@ class Duet(Setting):
         self.intro=Intro()
         self.menu=Menu()
         self.in_game=InGame()
+        self.pause_screen=PauseScreen()
         self.screens=[self.intro,self.menu,self.in_game]
 
         self.mouse_hitbox=Hitbox(pygame.mouse.get_pos(),pygame.Surface((1,1)))
@@ -32,6 +33,7 @@ class Duet(Setting):
         self.play=True
 
         self.gameover=False
+
 
     def init_pygame(self):
         pygame.init()
