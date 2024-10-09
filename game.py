@@ -148,6 +148,15 @@ class Duet(Setting):
                     for o in self.in_game.level.obs_group:
                         o.reset2()
 
+                if event.key==pygame.K_m:
+                    print("음소거: ",end="")
+                    if pygame.mixer.music.get_volume():
+                        print("ON")
+                        pygame.mixer.music.set_volume(0)
+                    else:
+                        print("OFF")
+                        pygame.mixer.music.set_volume(1)
+
 
             if event.type==pygame.KEYUP:
                 if event.key==pygame.K_LEFT and self.direction==-1:
@@ -161,6 +170,21 @@ class Duet(Setting):
                     self.check["main_menu"]=self.menu.screens[self.SCREEN.MAIN].button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
                     self.check["play_menu"]=self.menu.screens[self.SCREEN.PLAY].button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
 
+
+
+    def set_level(self,lv):
+        self.check["play_menu"]=False
+        self.direction=0
+        self.player.sprites()[0].angle=180
+        self.player.sprites()[1].angle=0
+        for p in self.player: p.speed=2.4
+        PlayerParticle.set_dy(0.9)
+        self.in_game.set_level(lv)
+        screen_change(self.screens,self.in_game)
+        self.menu.direction=0
+        self.menu.now=self.SCREEN.MAIN
+        self.menu.pos=[-setting.SIZE[0]//1.25,0]
+
     def move(self):
         if not self.pause:
             if not self.rewind_pause:
@@ -173,17 +197,9 @@ class Duet(Setting):
 
                 if self.check["play_menu"]:
                     if all(self.check["play_menu"][0]):
-                        self.check["play_menu"]=False
-                        self.direction=0
-                        self.player.sprites()[0].angle=180
-                        self.player.sprites()[1].angle=0
-                        for p in self.player: p.speed=2.4
-                        PlayerParticle.set_dy(0.9)
-                        self.in_game.set_level("test_level_3")
-                        screen_change(self.screens,self.in_game)
-                        self.menu.direction=0
-                        self.menu.now=self.SCREEN.MAIN
-                        self.menu.pos=[-setting.SIZE[0]//1.25,0]
+                        self.set_level("test_level_3")
+                    elif all(self.check["play_menu"][1]):
+                        self.set_level("test_level_4")
 
                 if self.intro.is_intro_done():
                     for p in self.player:

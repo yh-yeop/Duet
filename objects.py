@@ -200,12 +200,15 @@ class Obstacle(Objects):
                 print("충돌함")
                 paint=pygame.Surface((20,20))
                 paint.fill(players[row[1]].color)
-                if self.angle:
-                    print(row[0])
-                    rotate_pos=(Vector2(row[0])+Vector2((self.h*math.tan(self.angle))/2,0)).rotate(-self.angle)
-                    self.collide_pos.append((self.angle,Vector2()+Vector2(self.rect.topleft)-Vector2(10,10)))
+                if self.angle%90:
+                    if self.angle<0:
+                        rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(abs(self.angle)))))).rotate(-self.angle)
+                    elif self.angle>90:
+                        rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(self.angle%90))))).rotate(-self.angle%90)
+                    else:
+                        rotate_pos=(Vector2(row[0])-Vector2((self.h*math.sin(math.radians(self.angle))),0)).rotate(-self.angle)
+                    self.collide_pos.append((self.angle,Vector2(row[0])+Vector2(self.rect.topleft)-Vector2(10,10)))
                     self.collide_pos.append((self.angle,rotate_pos+Vector2(self.rect.topleft)-Vector2(10,10)))
-                    self.collide_pos.append((self.angle,rotate_pos))
                     self.backup_image.blit(paint,rotate_pos-Vector2(10,10))
 
                     
@@ -223,7 +226,7 @@ class Obstacle(Objects):
             # pygame.draw.rect(background,(255,0,0),self.rect,1)
 
 class Button(Objects):
-    def __init__(self,image,pos=Vector2(0,0)):
+    def __init__(self,image:pygame.Surface,pos=Vector2(0,0)):
         self.image=image.convert_alpha()
         self.alpha=255
         self.mask=pygame.mask.from_surface(self.image)
@@ -231,6 +234,7 @@ class Button(Objects):
 
     def plus_alpha(self,plus):
         self.alpha=max(min(self.alpha+plus,255),0)
+        self.image.set_alpha(self.alpha)
 
     def mouse_check(self,mouse,click):
         return pygame.sprite.collide_mask(mouse,self),click if self.alpha==255 else None,click
@@ -316,7 +320,11 @@ class Menu(Screen):
 
         if self.pos[0]!=-setting.SIZE[0]//1.25:
             for b in self.screens[setting.SCREEN.MAIN].buttons:
-                b.plus_alpha(-3)
+                b.plus_alpha(-6)
+        else:
+            for b in self.screens[setting.SCREEN.MAIN].buttons:
+                b.plus_alpha(6)
+
 
         for s in self.screens: s.update()
 
@@ -363,7 +371,8 @@ class MainMenu(Screen):
 class PlayMenu(Screen):
     def __init__(self):
         super().__init__((setting.SIZE[0]//1.25,setting.SIZE[1]))
-        self.buttons=[Button(return_image("test_level.png",(60,60)),(Vector2(*self.surface.get_size())//2)-Vector2(30,0)),
+        self.buttons=[Button(return_image("test_level.png",(60,60)),(Vector2(*self.surface.get_size())//2)-Vector2(60,0)),
+                      Button(return_image("test_level.png",(60,60)),(Vector2(*self.surface.get_size())//2)+Vector2(30,0))
                       ]
         
         self.texts=[
@@ -375,13 +384,9 @@ class PlayMenu(Screen):
         pass
 
     def button_check(self,mouse,click):
-        for button in self.buttons:
-            button.rect.move_ip(setting.SIZE[0]-setting.SIZE[0]//1.25,0)
-            if button==self.buttons[0] and all(button.mouse_check(mouse,click)): print("테스트 레벨 누름")
-        
-        re_value=[button.mouse_check(mouse,click) for button in self.buttons]
-        
-        for button in self.buttons: button.rect.move_ip(-(setting.SIZE[0]-setting.SIZE[0]//1.25),0)
+        for b in self.buttons: b.rect.move_ip(setting.SIZE[0]-setting.SIZE[0]//1.25,0)
+        re_value=[b.mouse_check(mouse,click) for b in self.buttons]
+        for b in self.buttons: b.rect.move_ip(-(setting.SIZE[0]-setting.SIZE[0]//1.25),0)
         
         return re_value
     
@@ -444,12 +449,18 @@ class PauseScreen(Screen):
     def __init__(self):
         super().__init__()
         self.button_size=60
-        self.buttons=[Button,
+        self.buttons=[Button(return_image("exit.png",(self.button_size,self.button_size)),[setting.SIZE[0]-20-self.button_size,setting.SIZE[1]]),
                       Button(return_image("play.png",(self.button_size,self.button_size)),[setting.SIZE[0]-20-self.button_size,setting.SIZE[1]])]
+        self.pause=False
 
+    def pause_onoff(self):
+        self.pause=True
 
     def update(self):
         pass
+
+    def blit(self,background):
+        background.blit(self.surface,(0,0))
 
 class Level:
     def __init__(self,name):
