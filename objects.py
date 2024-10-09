@@ -201,14 +201,12 @@ class Obstacle(Objects):
                 paint=pygame.Surface((20,20))
                 paint.fill(players[row[1]].color)
                 if self.angle:
-                    rotate_pos=Vector2(row[0]).rotate(-self.angle)
-                    self.collide_pos.append((0,Vector2(row[0])+Vector2(self.rect.topleft)-Vector2(10,10)))
-                    self.collide_pos.append((-self.angle,rotate_pos+Vector2(self.rect.topleft)-Vector2(27.5,-7.5)))
-                    self.collide_pos.append((-self.angle,rotate_pos+Vector2(self.rect.topleft)))
-                    self.backup_image.blit(paint,rotate_pos-Vector2(10,10)+Vector2(-17.5,17.5))
-                    # 10 * 7/4
-                    # 7/4의 기원. 아마도 45도가 아니라 135도를 돌려서 생긴 숫자
-                    # 45도였으면 3/4였을것
+                    print(row[0])
+                    rotate_pos=(Vector2(row[0])+Vector2((self.h*math.tan(self.angle))/2,0)).rotate(-self.angle)
+                    self.collide_pos.append((self.angle,Vector2()+Vector2(self.rect.topleft)-Vector2(10,10)))
+                    self.collide_pos.append((self.angle,rotate_pos+Vector2(self.rect.topleft)-Vector2(10,10)))
+                    self.collide_pos.append((self.angle,rotate_pos))
+                    self.backup_image.blit(paint,rotate_pos-Vector2(10,10))
 
                     
                     self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
@@ -434,17 +432,18 @@ class InGame(Screen):
     def collide_check(self,players):
         return self.level.collide_check(players) if self.is_screen else False
 
-    def fill(self):
-            self.surface.fill(setting.BLACK)
+    def draw(self):
+        self.surface.fill(setting.BLACK)
+        self.level.blit(self.surface)
 
     def blit(self,background):
         if self.is_screen:
-            self.level.blit(self.surface)
             background.blit(self.surface,(0,0))
 
 class PauseScreen(Screen):
     def __init__(self):
         super().__init__()
+        self.button_size=60
         self.buttons=[Button,
                       Button(return_image("play.png",(self.button_size,self.button_size)),[setting.SIZE[0]-20-self.button_size,setting.SIZE[1]])]
 

@@ -236,24 +236,30 @@ class Duet(Setting):
     def draw(self):
         self.background.fill(self.BLACK)
 
+
+
         if self.in_game.is_screen:
-            self.in_game.fill()
+            self.in_game.draw()
             draw_player(self.player,self.in_game.surface,"ingame")
+            self.in_game.blit(self.background)
 
         else:
             self.menu.screens[self.SCREEN.MAIN].fill()
             draw_player(self.player,self.menu.screens[1].surface,"menu")
+            self.menu.blit(self.background)
+
+        self.intro.blit(self.background)
+
+        if self.pause:
+            self.pause_screen.blit(self.background)
 
 
-        for screen in self.screens:
-            screen.blit(self.background)
-
-        # for o in self.in_game.level.obs_group:
-        #     if o.collide_pos!=[]:
-        #         paint=pygame.Surface((20,20))
-        #         paint.fill((66,255,37))
-        #         for angle,pos in o.collide_pos:
-        #             self.background.blit(paint,pos)
+        for o in self.in_game.level.obs_group:
+            if o.collide_pos!=[]:
+                paint=pygame.Surface((20,20),pygame.SRCALPHA)
+                paint.fill((66,255,37,50))
+                for angle,pos in o.collide_pos:
+                    self.background.blit(paint,pos)
         
         pygame.display.flip()   
 
