@@ -167,9 +167,9 @@ class Obstacle(Objects):
     def reset2(self):
         self.collide_pos=[]
 
-    def onoff_invincible(self,flag=None):
+    def update_invincible(self,flag=None):
         if flag==None:
-            self.invincible=not self.invincible
+            self.invincible=self.rect.top>=setting.SIZE[1]
         else:
             self.invincible=flag
 

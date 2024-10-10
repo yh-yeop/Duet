@@ -130,7 +130,7 @@ class Duet(Setting):
 
                 if event.key==pygame.K_2:
                     for o in self.in_game.level.obs_group:
-                        o.onoff_invincible()
+                        o.update_invincible(not o.invincible)
                     print(f"무적: {self.in_game.level.obs_group.sprites()[0].invincible}")
 
                 if event.key==pygame.K_3:
@@ -270,12 +270,12 @@ class Duet(Setting):
             self.pause_screen.blit(self.background)
 
 
-        for o in self.in_game.level.obs_group:
-            if o.collide_pos!=[]:
-                paint=pygame.Surface((20,20),pygame.SRCALPHA)
-                paint.fill((66,255,37,50))
-                for angle,pos in o.collide_pos:
-                    self.background.blit(paint,pos)
+        # for o in self.in_game.level.obs_group:
+        #     if o.collide_pos!=[]:
+        #         paint=pygame.Surface((20,20),pygame.SRCALPHA)
+        #         paint.fill((66,255,37,50))
+        #         for angle,pos in o.collide_pos:
+        #             self.background.blit(paint,pos)
         
         pygame.display.flip()   
 
