@@ -169,9 +169,12 @@ class Obstacle(Objects):
 
     def update_invincible(self,flag=None):
         if flag==None:
-            self.invincible=self.rect.top>=setting.SIZE[1]
+            self.invincible=not self.invincible
         else:
             self.invincible=flag
+
+    def is_finish(self):
+        return self.rect.top>=setting.SIZE[1]
 
     def update(self,speed=1):
         self.pos[0]+=self.dx*speed*FRAME_SPEED
@@ -449,15 +452,16 @@ class PauseScreen(Screen):
     def __init__(self):
         super().__init__()
         self.button_size=60
-        self.buttons=[Button(return_image("exit.png",(self.button_size,self.button_size)),[setting.SIZE[0]-20-self.button_size,setting.SIZE[1]]),
-                      Button(return_image("play.png",(self.button_size,self.button_size)),[setting.SIZE[0]-20-self.button_size,setting.SIZE[1]])]
+        self.buttons=[Button(return_image("exit.png",(self.button_size,self.button_size)),Vector2(setting.SIZE[0]-20-self.button_size,setting.SIZE[1])),
+                      Button(return_image("play.png",(self.button_size,self.button_size)),Vector2(setting.SIZE[0]-20-self.button_size,setting.SIZE[1]))]
         self.pause=False
 
     def pause_onoff(self):
         self.pause=True
 
     def update(self):
-        pass
+        if self.pause:
+            self.buttons[0].rect.center=min(Vector2(self.buttons[0].rect.centerx+3*FRAME_SPEED,30))
 
     def blit(self,background):
         background.blit(self.surface,(0,0))
@@ -482,6 +486,9 @@ class Level:
         self.player_angle=0
         self.pause_tick=0
 
+    def is_level_finished(self):
+        return all([o.is_finish() for o in self.obs_group])
+
     def update(self):
         # print(round(min([Vector2(*o.rect.center).distance_to(setting.PLAYER_CENTER["ingame"]) for o in self.obs_group]),2))
         if not self.pause_tick:
@@ -496,16 +503,13 @@ class Level:
             else:
                 for o in self.obs_group: o.update()
                 self.progress+=1
- 
-            if self.obs_group.sprites()[-1].rect.top>setting.SIZE[1]:
-                self.rewind_change()
         else:
             self.pause_tick-=1
 
 
     def rewind_change(self,flag=True):
         self.rewind=flag
-        for o in self.obs_group: o.invincible=flag
+        for o in self.obs_group: o.update_invincible(flag)
         if not flag:
             self.pause_tick=setting.FRAME*0.2
             PlayerParticle.set_dy(0.9)

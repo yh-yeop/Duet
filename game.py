@@ -130,7 +130,7 @@ class Duet(Setting):
 
                 if event.key==pygame.K_2:
                     for o in self.in_game.level.obs_group:
-                        o.update_invincible(not o.invincible)
+                        o.update_invincible()
                     print(f"무적: {self.in_game.level.obs_group.sprites()[0].invincible}")
 
                 if event.key==pygame.K_3:
