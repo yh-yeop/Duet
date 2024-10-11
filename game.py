@@ -6,7 +6,7 @@ from util import *
 
 class Duet(Setting):
     def __init__(self):
-        print("1: 박스 활성화/비활성화\n2: 무적 활성화/비활성화\n3: 일시정지 활성화/비활성화\n4: 장애물 페인트 초기화\nesc: 인트로 스킵, 메뉴로 나가기(일시정지 중에만)")
+        print("1: 박스 활성화/비활성화\n2: 무적 활성화/비활성화\n3: 일시정지 활성화/비활성화\n4: 장애물 페인트 초기화\nesc: 인트로 스킵, 일시정지\nm: 음소거 활성화/비활성화")
         super().__init__()
         self.init_pygame()
         self.player=pygame.sprite.Group(Player(self.RED,self.PLAYER_CENTER["menu"],"left"),
@@ -27,8 +27,11 @@ class Duet(Setting):
 
         self.mouse_hitbox=Hitbox(pygame.mouse.get_pos(),pygame.Surface((1,1)))
 
-        self.check={"main_menu":None,
-                    "play_menu":None}
+        self.check={"menu":{"main":None,
+                            "play":None,
+                            "setting":None},
+                    "pause":None
+                            }
         
         self.play=True
 
@@ -82,34 +85,32 @@ class Duet(Setting):
         keys=pygame.key.get_pressed()
         events=pygame.event.get()
         if not events:
-            self.check["main_menu"]=self.menu.screens[self.SCREEN.MAIN].button_check(self.mouse_hitbox,False)
-            self.check["play_menu"]=self.menu.screens[self.SCREEN.PLAY].button_check(self.mouse_hitbox,False)
+            self.check["menu"]["main"],self.check["menu"]["play"],self.check["menu"]["setting"]=self.menu.button_check(self.mouse_hitbox,False)
+            self.check["pause"]=self.pause_screen.button_check(self.mouse_hitbox,False)
 
         for event in events:
             if event.type==pygame.QUIT:
+                pygame.mixer.music.set_volume(0)
                 self.play=False
                 return
             
             if event.type==pygame.KEYDOWN:
                 if self.in_game.is_screen:
-                    if event.key==pygame.K_ESCAPE:
-                        if self.pause:
-                            screen_change(self.screens,self.menu)
-                            for p in self.player:
-                                p.speed=2
-                            for p in self.player: p.set_rewind_speed(self.in_game.level.player_angle)
-                            PlayerParticle.set_dy(0)
-                            self.pause=False
                     if not (self.pause or self.rewind_pause):
                         if event.key==pygame.K_LEFT:
                             self.direction=-1
                         if event.key==pygame.K_RIGHT:
                             self.direction=1
 
-                if self.intro.is_screen:
-                    if event.key==pygame.K_ESCAPE:
+                if event.key==pygame.K_ESCAPE:
+                    if self.intro.is_screen:
                         print("인트로 스킵")
                         self.intro.skip=True
+                    elif self.in_game.is_screen:
+                        self.direction=0
+                        self.pause=True
+                        self.pause_screen.screen_onoff(True)
+                        print(f"일시정지: {self.pause}")
                 
                 if self.menu.is_screen:
                     if event.key==pygame.K_LEFT:
@@ -133,10 +134,6 @@ class Duet(Setting):
                         o.update_invincible()
                     print(f"무적: {self.in_game.level.obs_group.sprites()[0].invincible}")
 
-                if event.key==pygame.K_3:
-                    self.direction=0
-                    self.pause=not self.pause
-                    print(f"일시정지: {self.pause}")
 
                 if event.key==pygame.K_4:
                     print("장애물 페인트 초기화")
@@ -167,13 +164,13 @@ class Duet(Setting):
 
             if not self.intro.is_screen:
                 if self.menu.is_screen:
-                    self.check["main_menu"]=self.menu.screens[self.SCREEN.MAIN].button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
-                    self.check["play_menu"]=self.menu.screens[self.SCREEN.PLAY].button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
-
+                    self.check["menu"]["main"],self.check["menu"]["play"],self.check["menu"]["setting"]=self.menu.button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
+                if self.in_game.is_screen:
+                    self.check["pause"]=self.pause_screen.button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
 
 
     def set_level(self,lv):
-        self.check["play_menu"]=False
+        self.check["menu"]["play"]=False
         self.direction=0
         self.player.sprites()[0].angle=180
         self.player.sprites()[1].angle=0
@@ -189,17 +186,20 @@ class Duet(Setting):
         if not self.pause:
             if not self.rewind_pause:
                 for screen in self.screens: screen.update()
-                if self.check["main_menu"]:
-                    if all(self.check["main_menu"][self.BUTTON.PLAY]):
+                if self.check["menu"]["main"]:
+                    if all(self.check["menu"]["main"][self.BUTTON.PLAY]):
                         self.menu.set_direction(-1)
-                    elif all(self.check["main_menu"][self.BUTTON.SETTING]):
+                    elif all(self.check["menu"]["main"][self.BUTTON.SETTING]):
                         self.menu.set_direction(1)
 
-                if self.check["play_menu"]:
-                    if all(self.check["play_menu"][0]):
-                        self.set_level("test_level_3")
-                    elif all(self.check["play_menu"][1]):
-                        self.set_level("test_level_4")
+                if self.check["menu"]["play"]:
+                    if all(self.check["menu"]["play"][0]):
+                        self.set_level("tutorial")
+                        print("Tutorial")
+                    elif all(self.check["menu"]["play"][1]):
+                        print("test_lv")
+                        self.set_level("test_level")
+
 
                 if self.intro.is_intro_done():
                     for p in self.player:
@@ -228,9 +228,36 @@ class Duet(Setting):
                 self.in_game.level.player_angle=self.player.sprites()[0].angle \
                     if min(tuple(map(lambda p: p.rect.x,self.player.sprites())))==self.player.sprites()[0].rect.x \
                     else self.player.sprites()[1].angle
+                
+                if self.in_game.level.is_level_finished():
+                    self.in_game.level.reset()
+                    screen_change(self.screens,self.menu)
+                    for p in self.player:
+                        p.speed=2
+                    for p in self.player: p.set_rewind_speed(self.in_game.level.player_angle)
+                    PlayerParticle.set_dy(0)
+                    self.pause=False
+                    print(f"메뉴로 돌아옴(레벨 끝남)")
 
             else:
                 self.player.update(0)
+        else:
+            self.pause_screen.update()
+            if self.check["pause"]:
+                if all(self.check["pause"][0]):
+                    self.direction=0
+                    self.pause=False
+                    self.pause_screen.screen_onoff(False)
+                    print(f"일시정지: {self.pause}")
+
+                if all(self.check["pause"][1]):
+                    screen_change(self.screens,self.menu)
+                    for p in self.player:
+                        p.speed=2
+                    for p in self.player: p.set_rewind_speed(self.in_game.level.player_angle)
+                    PlayerParticle.set_dy(0)
+                    self.pause=False
+                    print(f"메뉴로 돌아옴\n일시정지: {self.pause}")
 
 
     def collide_check(self):
@@ -255,7 +282,7 @@ class Duet(Setting):
 
 
         if self.in_game.is_screen:
-            self.in_game.draw()
+            self.in_game.fill()
             draw_player(self.player,self.in_game.surface,"ingame")
             self.in_game.blit(self.background)
 

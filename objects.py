@@ -161,6 +161,7 @@ class Obstacle(Objects):
         self.backup_image=self.image.copy()
         self.mask=pygame.mask.from_surface(self.image)
         self.collide_pos=[]
+        self.extra_image_direction=0
 
     def reset(self):
         self.backup_image.fill(setting.WHITE)
@@ -177,9 +178,21 @@ class Obstacle(Objects):
         return self.rect.top>=setting.SIZE[1]
 
     def update(self,speed=1):
+        if self.dx_plus: self.dx+=self.dx_plus*speed*FRAME_SPEED
+        if self.dy_plus: self.dy+=self.dy_plus*speed*FRAME_SPEED
         self.pos[0]+=self.dx*speed*FRAME_SPEED
         self.pos[1]+=self.dy*speed*FRAME_SPEED
         self.rect.center=self.pos
+        if not self.invincible and False:
+            if self.dx>0 and self.rect.right>setting.SIZE[0]:
+                self.extra_image_direction=1
+                self.pos+=Vector2(-setting.SIZE[0],0)
+                self.rect.move_ip(-setting.SIZE[0],0)
+            elif self.dx<0 and self.rect.left<0:
+                self.extra_image_direction=-1
+                self.pos+=Vector2(setting.SIZE[0],0)
+                self.rect.move_ip(setting.SIZE[0],0)
+            
         if self.angle_plus:
             self.angle+=self.angle_plus*speed*FRAME_SPEED
         if self.angle:
@@ -188,9 +201,6 @@ class Obstacle(Objects):
             self.mask=pygame.mask.from_surface(self.image)
         else:
             self.image=self.backup_image
-        if self.rect.y>=setting.CENTER[1]:
-            if self.dx_plus: self.dx+=self.dx_plus*speed*FRAME_SPEED
-            if self.dy_plus: self.dy+=self.dy_plus*speed*FRAME_SPEED
 
     def collide_check(self,players):
         if self.invincible or -400>Vector2(*self.rect.center).distance_to(setting.PLAYER_CENTER["ingame"])>600:
@@ -224,9 +234,11 @@ class Obstacle(Objects):
     
     def blit(self,background):
         background.blit(self.image,self.rect)
+        if self.extra_image_direction: print(self.extra_image_direction)
+        if self.extra_image_direction: background.blit(self.image,Vector2(self.rect.topleft)+Vector2(self.extra_image_direction*setting.SIZE[0],0))
         if self.box:
-            background.blit(self.backup_image,self.rect)
-            # pygame.draw.rect(background,(255,0,0),self.rect,1)
+            # background.blit(self.backup_image,self.rect)
+            pygame.draw.rect(background,(255,0,0),self.rect,1)
 
 class Button(Objects):
     def __init__(self,image:pygame.Surface,pos=Vector2(0,0)):
@@ -244,7 +256,7 @@ class Button(Objects):
     
     def blit(self,background):
         background.blit(self.image,self.rect.topleft)
-        if self.box:
+        if Objects.box:
             pygame.draw.rect(background,(255,0,0),self.rect,1)
 
 class Intro(Screen):
@@ -295,11 +307,30 @@ class Menu(Screen):
         self.direction=0
         
     def set_direction(self,direction):
-        if -self.direction==direction:
-            self.now-=self.direction
-        if self.direction==direction:
-            self.now=setting.SCREEN.MAIN
-        self.direction=direction
+        if self.screens[setting.SCREEN.MAIN].is_intro_finished():
+            if -self.direction==direction:
+                self.now-=self.direction
+            if self.direction==direction:
+                self.now=setting.SCREEN.MAIN
+            self.direction=direction
+
+    def button_check(self,mouse,click):
+        re_value=[]
+        if self.pos[0]==-setting.SIZE[0]//1.25:
+            re_value.append(self.screens[setting.SCREEN.MAIN].button_check(mouse,click))
+        else:
+            re_value.append(None)
+
+        if self.pos[0]==-setting.SIZE[0]//1.25*2:
+            re_value.append(self.screens[setting.SCREEN.PLAY].button_check(mouse,click))
+        else:
+            re_value.append(None)
+
+        if self.pos[0]==0:
+            re_value.append(self.screens[setting.SCREEN.SETTING].button_check(mouse,click))
+        else:
+            re_value.append(None)
+        return re_value
 
 
     def update(self):
@@ -348,7 +379,9 @@ class MainMenu(Screen):
         self.buttons=[Button(return_image("setting.png",(self.button_size,self.button_size)),[20,setting.SIZE[1]]),
                       Button(return_image("play.png",(self.button_size,self.button_size)),[setting.SIZE[0]-20-self.button_size,setting.SIZE[1]])]
         
-    
+    def is_intro_finished(self):
+        return all([button.rect.y==setting.SIZE[1]-self.button_size-20 for button in self.buttons])
+
     def update(self):
         if self.start and self.is_screen:
             if self.text[1][1]!=25: self.text[1][1]=min(self.text[1][1]+11*FRAME_SPEED,25)
@@ -375,7 +408,7 @@ class PlayMenu(Screen):
     def __init__(self):
         super().__init__((setting.SIZE[0]//1.25,setting.SIZE[1]))
         self.buttons=[Button(return_image("test_level.png",(60,60)),(Vector2(*self.surface.get_size())//2)-Vector2(60,0)),
-                      Button(return_image("test_level.png",(60,60)),(Vector2(*self.surface.get_size())//2)+Vector2(30,0))
+                      Button(return_image("lv.png",(60,60)),(Vector2(*self.surface.get_size())//2)+Vector2(30,0))
                       ]
         
         self.texts=[
@@ -418,6 +451,10 @@ class SettingMenu(Screen):
     def update(self):
         pass
 
+    def button_check(self,mouse,click):
+        return None
+    
+
     def blit(self,background):
         if self.is_screen:
             self.surface.fill(setting.WHITE)
@@ -440,31 +477,46 @@ class InGame(Screen):
     def collide_check(self,players):
         return self.level.collide_check(players) if self.is_screen else False
 
-    def draw(self):
+    def fill(self):
         self.surface.fill(setting.BLACK)
-        self.level.blit(self.surface)
 
     def blit(self,background):
         if self.is_screen:
+            self.level.blit(self.surface)
             background.blit(self.surface,(0,0))
 
 class PauseScreen(Screen):
     def __init__(self):
         super().__init__()
         self.button_size=60
-        self.buttons=[Button(return_image("exit.png",(self.button_size,self.button_size)),Vector2(setting.SIZE[0]-20-self.button_size,setting.SIZE[1])),
-                      Button(return_image("play.png",(self.button_size,self.button_size)),Vector2(setting.SIZE[0]-20-self.button_size,setting.SIZE[1]))]
-        self.pause=False
+        self.buttons=[Button(return_image("play.png",(self.button_size,self.button_size)),Vector2(20-100,setting.SIZE[1]-80)),
+                      Button(return_image("exit.png",(self.button_size,self.button_size)),Vector2(setting.SIZE[0]-20-self.button_size-100,setting.SIZE[1]-80))]
+        self.move=False
+        self.is_screen=True
 
-    def pause_onoff(self):
-        self.pause=True
+    def screen_onoff(self,flag=None):
+        if flag==None:
+            self.move=not self.move
+        else:
+            self.move=flag
+
+    def button_check(self,mouse,click):
+        return [button.mouse_check(mouse,click) for button in self.buttons]
 
     def update(self):
-        if self.pause:
-            self.buttons[0].rect.center=min(Vector2(self.buttons[0].rect.centerx+3*FRAME_SPEED,30))
+        if self.move:
+            self.buttons[0].rect.x=max(Vector2(self.buttons[0].rect.x-5,setting.SIZE[0]-20-self.button_size))
+            self.buttons[1].rect.x=min(Vector2(self.buttons[0].rect.x+5,20))
+        else:
+            self.buttons[0].rect.x=min(Vector2(self.buttons[0].rect.x+5,20-100))
+            self.buttons[1].rect.x=max(Vector2(self.buttons[0].rect.x-5,setting.SIZE[0]-20-self.button_size-100))
 
     def blit(self,background):
-        background.blit(self.surface,(0,0))
+        if self.is_screen:
+            self.surface.fill((0,0,0,0))
+            for b in self.buttons: self.surface.blit(b.image,b.rect)
+
+            background.blit(self.surface,(0,0))
 
 class Level:
     def __init__(self,name):
@@ -475,12 +527,12 @@ class Level:
             try: self.df=pd.read_csv("Duet/"+path,encoding="cp949")
             except FileNotFoundError: self.df=pd.read_csv("./../Duet/"+path,encoding="cp949")
         max_obs=len(self.df)
-        df_list=[list(self.df.loc[i].to_dict().values()) for i in range(max_obs)]
-        for i in range(len(df_list)):
-            for j in range(len(df_list[i])):
-                if str(df_list[i][j])=="nan":
-                    df_list[i][j]=0
-        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in df_list])
+        self.df_list=[list(self.df.loc[i].to_dict().values()) for i in range(max_obs)]
+        for i in range(len(self.df_list)):
+            for j in range(len(self.df_list[i])):
+                if str(self.df_list[i][j])=="nan":
+                    self.df_list[i][j]=0
+        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in self.df_list])
         self.rewind=False
         self.progress=0
         self.player_angle=0
@@ -489,12 +541,15 @@ class Level:
     def is_level_finished(self):
         return all([o.is_finish() for o in self.obs_group])
 
+    def reset(self):
+        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in self.df_list])
+
     def update(self):
         # print(round(min([Vector2(*o.rect.center).distance_to(setting.PLAYER_CENTER["ingame"]) for o in self.obs_group]),2))
         if not self.pause_tick:
             if self.rewind:
                 for o in self.obs_group: o.update(-self.progress/(setting.FRAME*0.8))
-                if self.obs_group.sprites()[0].rect.y<=self.df.loc[0].to_dict()["y"]:
+                if all(self.obs_group.sprites()[i].rect.y<=self.df.loc[i].to_dict()["y"] for i in range(len(self.obs_group))):
                     for o in self.obs_group:
                         o.rect.topleft=o.x,o.y
                         o.rect.size=o.w,o.h
