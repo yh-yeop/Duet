@@ -213,6 +213,7 @@ class Obstacle(Objects):
                 print("충돌함")
                 paint=pygame.Surface((20,20))
                 paint.fill(players[row[1]].color)
+
                 if self.angle%90:
                     if self.angle<0:
                         rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(abs(self.angle)))))).rotate(-self.angle)
