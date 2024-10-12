@@ -73,7 +73,7 @@ class Duet(Setting):
                 self.time_count["rewind"]-=1
                 if self.time_count["rewind"]<=0:
                     self.rewind_pause=False
-                    for p in self.player: p.set_rewind_speed(self.in_game.level.player_angle)
+                    for p in self.player: p.set_rewind_speed(Player.rewind_angle)
                     self.in_game.level.rewind_change()
         if not self.intro.is_screen:
             self.mouse_hitbox.update(pygame.mouse.get_pos())
@@ -107,10 +107,11 @@ class Duet(Setting):
                         print("인트로 스킵")
                         self.intro.skip=True
                     elif self.in_game.is_screen:
-                        self.direction=0
-                        self.pause=True
-                        self.pause_screen.screen_onoff(True)
-                        print(f"일시정지: {self.pause}")
+                        if not self.pause:
+                            self.direction=0
+                            self.pause=True
+                            self.pause_screen.screen_onoff(True)
+                            print(f"일시정지: {self.pause}")
                 
                 if self.menu.is_screen:
                     if event.key==pygame.K_LEFT:
@@ -153,6 +154,10 @@ class Duet(Setting):
                     else:
                         print("OFF")
                         pygame.mixer.music.set_volume(1)
+                if event.key==pygame.K_r:
+                    print("플레이어 사망")
+                    for p in self.player:
+                        p.die()
 
 
             if event.type==pygame.KEYUP:
@@ -225,16 +230,15 @@ class Duet(Setting):
 
                 self.player.update(self.direction)
 
-                self.in_game.level.player_angle=self.player.sprites()[0].angle \
-                    if min(tuple(map(lambda p: p.rect.x,self.player.sprites())))==self.player.sprites()[0].rect.x \
-                    else self.player.sprites()[1].angle
+                rewind_angle=self.player.sprites()[0].angle if min(tuple(map(lambda p: p.rect.x,self.player.sprites())))==self.player.sprites()[0].rect.x else self.player.sprites()[1].angle
+                Player.set_rewind_angle(rewind_angle)
                 
                 if self.in_game.level.is_level_finished():
                     self.in_game.level.reset()
                     screen_change(self.screens,self.menu)
                     for p in self.player:
                         p.speed=2
-                    for p in self.player: p.set_rewind_speed(self.in_game.level.player_angle)
+                    for p in self.player: p.set_rewind_speed(Player.rewind_angle)
                     PlayerParticle.set_dy(0)
                     self.pause=False
                     print(f"메뉴로 돌아옴(레벨 끝남)")
@@ -254,7 +258,7 @@ class Duet(Setting):
                     screen_change(self.screens,self.menu)
                     for p in self.player:
                         p.speed=2
-                    for p in self.player: p.set_rewind_speed(self.in_game.level.player_angle)
+                    for p in self.player: p.set_rewind_speed(Player.rewind_angle)
                     PlayerParticle.set_dy(0)
                     self.pause=False
                     print(f"메뉴로 돌아옴\n일시정지: {self.pause}")

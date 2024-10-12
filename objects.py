@@ -28,6 +28,7 @@ class Player(Objects):
     speed=2
     r=12
     distance=setting.CENTER[0]//5*2
+    rewind_angle=0
     def __init__(self,color,center,direction):
         self.center=Vector2(center)
         self.angle=180 if direction=="left" else 0
@@ -42,6 +43,10 @@ class Player(Objects):
         self.rewind=[None,0]
         self.death_tick=0
         self.death_particle_group=pygame.sprite.Group()
+
+    @classmethod
+    def set_rewind_angle(cls,angle):
+        cls.rewind_angle=angle
 
     def set_rewind_speed(self,angle):
         self.rewind[1]=setting.FRAME*0.8
@@ -71,7 +76,10 @@ class Player(Objects):
         else:
             self.death_tick-=1
         self.rect.center=self.center+Vector2(self.distance,0).rotate(self.angle)
-        self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,self.angle))
+        if angle_plus:
+            self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,self.angle))
+        else:
+            self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,0))
         self.particle_group.update()
         self.death_particle_group.update()
         for dp in self.death_particle_group:
@@ -111,8 +119,8 @@ class PlayerParticle(Particle):
     def update(self):
         super().update()
         self.rect.y+=PlayerParticle.dy*FRAME_SPEED
-        self.size=max(self.size-0.01*FRAME_SPEED,0)
-        self.alpha=max(self.alpha-2.5*FRAME_SPEED,0)
+        self.size=max(self.size-0.009*FRAME_SPEED,0)
+        self.alpha=max(self.alpha-1.9*FRAME_SPEED,0)
         self.blit_image=pygame.transform.rotozoom(self.image,self.angle,self.size)
         self.blit_image.set_alpha(self.alpha)
 
@@ -183,7 +191,7 @@ class Obstacle(Objects):
         self.pos[0]+=self.dx*speed*FRAME_SPEED
         self.pos[1]+=self.dy*speed*FRAME_SPEED
         self.rect.center=self.pos
-        if not self.invincible and False:
+        if not self.invincible:
             if self.dx>0 and self.rect.right>setting.SIZE[0]:
                 self.extra_image_direction=1
                 self.pos+=Vector2(-setting.SIZE[0],0)
@@ -520,7 +528,7 @@ class PauseScreen(Screen):
             background.blit(self.surface,(0,0))
 
 class Level:
-    def __init__(self,name):
+    def __init__(self,name,next_level=None):
         path="assets/level/"+name+".csv"
         try:
             self.df=pd.read_csv(path,encoding="cp949")
@@ -536,8 +544,9 @@ class Level:
         self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in self.df_list])
         self.rewind=False
         self.progress=0
-        self.player_angle=0
         self.pause_tick=0
+        if next_level:
+            self.next_level=Level(next_level)
 
     def is_level_finished(self):
         return all([o.is_finish() for o in self.obs_group])
