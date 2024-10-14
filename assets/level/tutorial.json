@@ -1,0 +1,46 @@
+{
+    "speed":1.0,
+    "name":"튜토리얼-1",
+    "sentence":"This is test sentence.",
+    "obstacles":[
+        {
+          "shape": "rect",
+          "dx": "3",
+          "dy": "",
+          "x": "100",
+          "y": "100",
+          "w": "230",
+          "h": "37",
+          "angle": "30",
+          "angle_plus": "",
+          "dx_plus": "",
+          "dy_plus": ""
+        },
+        {
+          "shape": "rect",
+          "dx": "5",
+          "dy": "",
+          "x": "100",
+          "y": "250",
+          "w": "230",
+          "h": "37",
+          "angle": "30",
+          "angle_plus": "",
+          "dx_plus": "",
+          "dy_plus": ""
+        },
+        {
+          "shape": "rect",
+          "dx": "20",
+          "dy": "",
+          "x": "100",
+          "y": "400",
+          "w": "230",
+          "h": "37",
+          "angle": "30",
+          "angle_plus": "",
+          "dx_plus": "",
+          "dy_plus": ""
+        }
+      ]
+}

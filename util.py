@@ -21,7 +21,7 @@ def return_image(name="lv.png",size=False):
     if size: return pygame.transform.scale(image,size)
     else: return image
         
-def return_font(size,name="malgungothic",bold=False,italic=False,isfile=False):
+def return_font(size=30,name="malgungothic",bold=False,italic=False,isfile=False):
     if isfile:
         name="assets/font/"+name
         try:
@@ -37,7 +37,7 @@ def return_text(font:pygame.font.Font,text="test",antialias=True,color=setting.W
 
 
 
-def draw_player_circle(background,r=setting.CENTER[0]//5*2,alpha=128,center=setting.PLAYER_CENTER["menu"]):
+def draw_player_circle(background:pygame.Surface,r=setting.CENTER[0]//5*2,alpha=128,center=setting.PLAYER_CENTER["menu"]):
     circle_surface=pygame.Surface(setting.SIZE,pygame.SRCALPHA)
     pygame.draw.circle(circle_surface,(200,200,200,alpha),center,r,1)
     background.blit(circle_surface,(0,0))

@@ -29,12 +29,13 @@ class Player(Objects):
     r=12
     distance=setting.CENTER[0]//5*2
     rewind_angle=0
+    center=setting.PLAYER_CENTER["menu"]
     def __init__(self,color,center,direction):
         self.center=Vector2(center)
         self.angle=180 if direction=="left" else 0
-        pos=self.center+Vector2(self.distance,0).rotate(self.angle)
         self.image=pygame.Surface((1,1),pygame.SRCALPHA)
         pygame.draw.rect(self.image,setting.WHITE,(0,0,*self.image.get_size()),1)
+        pos=self.center+Vector2(self.distance,0).rotate(self.angle)
         super().__init__(pos,self.image,self.angle)
         
         self.alpha=180
@@ -48,14 +49,16 @@ class Player(Objects):
     def set_rewind_angle(cls,angle):
         cls.rewind_angle=angle
 
-    def set_rewind_speed(self,angle):
+    def set_rewind_speed(self):
         self.rewind[1]=setting.FRAME*0.8
-        self.rewind[0]=(540-angle)/self.rewind[1]
+        self.rewind[0]=(540-Player.rewind_angle)/self.rewind[1]
 
     def change_center(self,screen):
         func=min if screen=="ingame" else max
-        self.center[1]=func(setting.PLAYER_CENTER["ingame"][1]-setting.PLAYER_CENTER["menu"][1]/(setting.FRAME*0.8),setting.PLAYER_CENTER[screen])
+        self.center[1]=func(setting.PLAYER_CENTER["ingame"][1]-setting.PLAYER_CENTER["menu"][1]/(setting.FRAME),setting.PLAYER_CENTER[screen][1])
         
+    def reset_particle(self):
+        self.particle_group=pygame.sprite.Group()
 
     def die(self):
         self.death_tick=84
@@ -258,15 +261,30 @@ class Button(Objects):
 
     def plus_alpha(self,plus):
         self.alpha=max(min(self.alpha+plus,255),0)
+
+    def update(self):
         self.image.set_alpha(self.alpha)
 
     def mouse_check(self,mouse,click):
-        return pygame.sprite.collide_mask(mouse,self),click if self.alpha==255 else None,click
+        re_value=pygame.sprite.collide_mask(self,mouse),click if self.alpha==255 else None,click
+        self.alpha=170 if re_value[0] else 255
+        return re_value
     
     def blit(self,background):
-        background.blit(self.image,self.rect.topleft)
+        background.blit(self.image,self.rect)
         if Objects.box:
             pygame.draw.rect(background,(255,0,0),self.rect,1)
+
+
+class OnOffButton(Button):
+    def __init__(self,font,pos=Vector2(0,0)):
+        super().__init__(return_text(font,"On",color=setting.BLUE),pos)
+        background=pygame.Surface(self.image.get_size())
+        background.fill(setting.WHITE)
+        background.blit(self.image,(0,0))
+        self.image=background
+        self.mask=pygame.mask.from_surface(self.image)
+
 
 class Intro(Screen):
     def __init__(self):
@@ -309,7 +327,6 @@ class Menu(Screen):
     def __init__(self, size=Vector2(*setting.SIZE)+Vector2(2*setting.SIZE[0]//1.25,0)):
         super().__init__(size)
         self.screens=[SettingMenu(),MainMenu(),PlayMenu()]
-        for s in self.screens: s.is_screen=True
         self.pos=[-setting.SIZE[0]//1.25,0]
         self.now=setting.SCREEN.MAIN
         self.target=setting.SCREEN.MAIN
@@ -369,7 +386,9 @@ class Menu(Screen):
                 b.plus_alpha(6)
 
 
-        for s in self.screens: s.update()
+        for s in self.screens:
+            s.is_screen=self.is_screen
+            s.update()
 
     def blit(self,background):
         if self.is_screen:
@@ -385,8 +404,8 @@ class MainMenu(Screen):
         self.text[1]-=Vector2(*self.text[0].get_size())//2
         self.text[1][1]-=self.text[0].get_size()[1]//2
         self.button_size=60
-        self.buttons=[Button(return_image("setting.png",(self.button_size,self.button_size)),[20,setting.SIZE[1]]),
-                      Button(return_image("play.png",(self.button_size,self.button_size)),[setting.SIZE[0]-20-self.button_size,setting.SIZE[1]])]
+        self.buttons=[Button(return_image("setting.png",(self.button_size,self.button_size)),(20,setting.SIZE[1])),
+                      Button(return_image("play.png",(self.button_size,self.button_size)),(setting.SIZE[0]-20-self.button_size,setting.SIZE[1]))]
         
     def is_intro_finished(self):
         return all([button.rect.y==setting.SIZE[1]-self.button_size-20 for button in self.buttons])
@@ -397,6 +416,13 @@ class MainMenu(Screen):
             for button in self.buttons:
                 if button.rect.y!=setting.SIZE[1]-self.button_size-20:
                     button.rect.y=max(button.rect.y-5,setting.SIZE[1]-self.button_size-20)
+        elif self.start and not self.is_screen:
+            for button in self.buttons: button.rect.y=setting.SIZE[1]
+            self.start=False
+        elif not self.start and self.is_screen:
+            self.start=True
+        for button in self.buttons: button.update()
+
 
     def fill(self):
         self.surface.fill(setting.BLACK)
@@ -417,7 +443,7 @@ class PlayMenu(Screen):
     def __init__(self):
         super().__init__((setting.SIZE[0]//1.25,setting.SIZE[1]))
         self.buttons=[Button(return_image("test_level.png",(60,60)),(Vector2(*self.surface.get_size())//2)-Vector2(60,0)),
-                      Button(return_image("lv.png",(60,60)),(Vector2(*self.surface.get_size())//2)+Vector2(30,0))
+                      Button(return_image(size=(60,60)),(Vector2(*self.surface.get_size())//2)+Vector2(30,0))
                       ]
         
         self.texts=[
@@ -426,7 +452,7 @@ class PlayMenu(Screen):
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 
     def update(self):
-        pass
+        for button in self.buttons: button.update()
 
     def button_check(self,mouse,click):
         for b in self.buttons: b.rect.move_ip(setting.SIZE[0]-setting.SIZE[0]//1.25,0)
@@ -456,9 +482,11 @@ class SettingMenu(Screen):
             (return_text(return_font(30,self.kor_font),"설정",color=setting.BLACK),Vector2(self.surface.get_size()[0]//2,10))
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
+        self.buttons=[]
 
     def update(self):
-        pass
+        return
+        for button in self.buttons: button.update()
 
     def button_check(self,mouse,click):
         return None
@@ -474,9 +502,11 @@ class InGame(Screen):
     def __init__(self):
         super().__init__()
         self.level=Level("test_level")
+        # self.level_texts=self.level.texts
 
     def set_level(self,name):
         self.level=Level(name)
+        # self.level_texts=self.level.texts
 
     def update(self):
         if self.is_screen:

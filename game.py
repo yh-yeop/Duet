@@ -73,7 +73,7 @@ class Duet(Setting):
                 self.time_count["rewind"]-=1
                 if self.time_count["rewind"]<=0:
                     self.rewind_pause=False
-                    for p in self.player: p.set_rewind_speed(Player.rewind_angle)
+                    for p in self.player: p.set_rewind_speed()
                     self.in_game.level.rewind_change()
         if not self.intro.is_screen:
             self.mouse_hitbox.update(pygame.mouse.get_pos())
@@ -154,6 +154,7 @@ class Duet(Setting):
                     else:
                         print("OFF")
                         pygame.mixer.music.set_volume(1)
+
                 if event.key==pygame.K_r:
                     print("플레이어 사망")
                     for p in self.player:
@@ -179,7 +180,9 @@ class Duet(Setting):
         self.direction=0
         self.player.sprites()[0].angle=180
         self.player.sprites()[1].angle=0
-        for p in self.player: p.speed=2.4
+        for p in self.player:
+            p.speed=2.4
+            p.reset_particle()
         PlayerParticle.set_dy(0.9)
         self.in_game.set_level(lv)
         screen_change(self.screens,self.in_game)
@@ -202,14 +205,15 @@ class Duet(Setting):
                         self.set_level("tutorial")
                         print("Tutorial")
                     elif all(self.check["menu"]["play"][1]):
-                        print("test_lv")
-                        self.set_level("test_level")
+                        print("test_lv_4")
+                        self.set_level("test_level_4")
 
 
                 if self.intro.is_intro_done():
                     for p in self.player:
                         p.r=100
                         p.distance=0
+                        p.reset_particle()
                     self.time_count["menu_after_intro"]=180 if not self.intro.skip else 1
                     screen_change(self.screens,self.menu)
 
@@ -235,10 +239,11 @@ class Duet(Setting):
                 
                 if self.in_game.level.is_level_finished():
                     self.in_game.level.reset()
+                    for p in self.player: p.reset_particle()
                     screen_change(self.screens,self.menu)
                     for p in self.player:
                         p.speed=2
-                    for p in self.player: p.set_rewind_speed(Player.rewind_angle)
+                    for p in self.player: p.set_rewind_speed()
                     PlayerParticle.set_dy(0)
                     self.pause=False
                     print(f"메뉴로 돌아옴(레벨 끝남)")
@@ -258,7 +263,8 @@ class Duet(Setting):
                     screen_change(self.screens,self.menu)
                     for p in self.player:
                         p.speed=2
-                    for p in self.player: p.set_rewind_speed(Player.rewind_angle)
+                        p.reset_particle()
+                        p.set_rewind_speed()
                     PlayerParticle.set_dy(0)
                     self.pause=False
                     print(f"메뉴로 돌아옴\n일시정지: {self.pause}")
