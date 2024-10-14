@@ -276,16 +276,31 @@ class Button(Objects):
             pygame.draw.rect(background,(255,0,0),self.rect,1)
 
 
-class OnOffButton(Button):
-    def __init__(self,font,pos=Vector2(0,0)):
-        super().__init__(return_text(font,"On",color=setting.BLUE),pos)
-        background=pygame.Surface(self.image.get_size())
-        background.fill(setting.WHITE)
-        background.blit(self.image,(0,0))
-        self.image=background
-        self.mask=pygame.mask.from_surface(self.image)
+class OnOffButton:
+    def __init__(self,text="Test",flag=True,pos=Vector2(0,200)):
+        self.image=pygame.Surface((setting.SIZE[0]//1.25,setting.SIZE[1]))
+        self.image.fill(setting.WHITE)
+        self.image.blit(return_text(return_font(),text),(0,0))
+        self.buttons=[Button(return_text(return_font(),"켜기",color=setting.BLUE)),
+                      Button(return_text(return_font(),"끄기",color=setting.RED))]
+        for b in self.buttons: b.rect.topright=(self.image.get_size()[0],self.pos[1])
+        self.flag=flag
+        self.image.fill(setting.WHITE,self.buttons[int(self.flag)].rect)
+        self.buttons[int(self.flag)].blit(self.image)
+        self.pos=pos
+
+    def mouse_check(self,mouse,click):
+        if any([all(b.mouse_check(mouse,click)) for b in self.buttons]):
+            self.flag=not self.flag
+            self.image.fill(setting.WHITE,self.buttons[int(self.flag)].rect)
+            self.buttons[int(self.flag)].blit(self.image)
+    
+    def blit(self,background:pygame.Surface):
+        background.blit(self.image,self.pos)
 
 
+
+ 
 class Intro(Screen):
     def __init__(self):
         super().__init__()
