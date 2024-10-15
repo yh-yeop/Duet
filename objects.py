@@ -497,14 +497,13 @@ class SettingMenu(Screen):
             (return_text(return_font(30,self.kor_font),"설정",color=setting.BLACK),Vector2(self.surface.get_size()[0]//2,10))
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
-        self.buttons=[]
+        self.buttons=[OnOffButton()]
 
     def update(self):
-        return
         for button in self.buttons: button.update()
 
     def button_check(self,mouse,click):
-        return None
+        for b in self.buttons: b.mouse_check(mouse,click)
     
 
     def blit(self,background):
