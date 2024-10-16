@@ -2,6 +2,8 @@
     "speed":1.0,
     "name":"튜토리얼-1",
     "sentence":"This is test sentence.",
+    "rotate":10,
+    "next":"level_2",
     "obstacles": [
         {
             "shape": "rect",

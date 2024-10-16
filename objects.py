@@ -4,6 +4,7 @@ from setting import Setting
 from util import *
 from abstract_objects import Objects,Screen,Particle
 import pandas as pd
+import json
 import numpy as np
 import math
 
@@ -255,25 +256,27 @@ class Obstacle(Objects):
 class Button(Objects):
     def __init__(self,image:pygame.Surface,pos=Vector2(0,0)):
         self.image=image.convert_alpha()
-        self.alpha=255
         self.mask=pygame.mask.from_surface(self.image)
+        self.alpha=255
         super().__init__(pos,self.image)
 
-    def plus_alpha(self,plus):
-        self.alpha=max(min(self.alpha+plus,255),0)
-
-    def update(self):
-        self.image.set_alpha(self.alpha)
-
     def mouse_check(self,mouse,click):
-        re_value=pygame.sprite.collide_mask(self,mouse),click if self.alpha==255 else None,click
-        self.alpha=170 if re_value[0] else 255
+        re_value=pygame.sprite.collide_mask(self,mouse),click if self.alpha in (255,170) else None,click
+        if re_value[0]: self.alpha=170
         return re_value
     
     def blit(self,background):
+        self.image.set_alpha(self.alpha)
         background.blit(self.image,self.rect)
         if Objects.box:
             pygame.draw.rect(background,(255,0,0),self.rect,1)
+
+class MenuButton(Button):
+    def __init__(self,image:pygame.Surface,pos=Vector2(0,0)):
+        super().__init__(image,pos)
+
+    def plus_alpha(self,plus):
+        self.alpha=max(min(self.alpha+plus,255),0)
 
 
 class OnOffButton:
@@ -283,11 +286,11 @@ class OnOffButton:
         self.image.blit(return_text(return_font(),text),(0,0))
         self.buttons=[Button(return_text(return_font(),"켜기",color=setting.BLUE)),
                       Button(return_text(return_font(),"끄기",color=setting.RED))]
+        self.pos=pos
         for b in self.buttons: b.rect.topright=(self.image.get_size()[0],self.pos[1])
         self.flag=flag
         self.image.fill(setting.WHITE,self.buttons[int(self.flag)].rect)
         self.buttons[int(self.flag)].blit(self.image)
-        self.pos=pos
 
     def mouse_check(self,mouse,click):
         if any([all(b.mouse_check(mouse,click)) for b in self.buttons]):
@@ -419,8 +422,8 @@ class MainMenu(Screen):
         self.text[1]-=Vector2(*self.text[0].get_size())//2
         self.text[1][1]-=self.text[0].get_size()[1]//2
         self.button_size=60
-        self.buttons=[Button(return_image("setting.png",(self.button_size,self.button_size)),(20,setting.SIZE[1])),
-                      Button(return_image("play.png",(self.button_size,self.button_size)),(setting.SIZE[0]-20-self.button_size,setting.SIZE[1]))]
+        self.buttons=[MenuButton(return_image("setting.png",(self.button_size,self.button_size)),(20,setting.SIZE[1])),
+                      MenuButton(return_image("play.png",(self.button_size,self.button_size)),(setting.SIZE[0]-20-self.button_size,setting.SIZE[1]))]
         
     def is_intro_finished(self):
         return all([button.rect.y==setting.SIZE[1]-self.button_size-20 for button in self.buttons])
@@ -436,7 +439,6 @@ class MainMenu(Screen):
             self.start=False
         elif not self.start and self.is_screen:
             self.start=True
-        for button in self.buttons: button.update()
 
 
     def fill(self):
@@ -449,6 +451,7 @@ class MainMenu(Screen):
         return [button.mouse_check(mouse,click) for button in self.buttons]
         
     def blit(self,background):
+        print(self.is_screen)
         if self.is_screen:
             self.surface.blit(*self.text)
             for b in self.buttons: b.blit(self.surface)
@@ -465,9 +468,6 @@ class PlayMenu(Screen):
             (return_text(return_font(25,self.kor_font),"플레이",color=setting.WHITE),Vector2(self.surface.get_size()[0]//2,10))
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
-
-    def update(self):
-        for button in self.buttons: button.update()
 
     def button_check(self,mouse,click):
         for b in self.buttons: b.rect.move_ip(setting.SIZE[0]-setting.SIZE[0]//1.25,0)
@@ -499,9 +499,6 @@ class SettingMenu(Screen):
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
         self.buttons=[OnOffButton()]
 
-    def update(self):
-        for button in self.buttons: button.update()
-
     def button_check(self,mouse,click):
         for b in self.buttons: b.mouse_check(mouse,click)
     
@@ -510,6 +507,7 @@ class SettingMenu(Screen):
         if self.is_screen:
             self.surface.fill(setting.WHITE)
             for text in self.texts: self.surface.blit(*text)
+            for b in self.buttons: b.blit(self.surface)
             background.blit(self.surface,(0,0))
 
 class InGame(Screen):
