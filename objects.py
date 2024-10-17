@@ -451,7 +451,6 @@ class MainMenu(Screen):
         return [button.mouse_check(mouse,click) for button in self.buttons]
         
     def blit(self,background):
-        print(self.is_screen)
         if self.is_screen:
             self.surface.blit(*self.text)
             for b in self.buttons: b.blit(self.surface)
@@ -513,7 +512,7 @@ class SettingMenu(Screen):
 class InGame(Screen):
     def __init__(self):
         super().__init__()
-        self.level=Level("test_level")
+        self.level=Level("tutorial")
         # self.level_texts=self.level.texts
 
     def set_level(self,name):
@@ -571,37 +570,35 @@ class PauseScreen(Screen):
 
 class Level:
     def __init__(self,name,next_level=None):
-        path="assets/level/"+name+".csv"
+        path="assets/level/"+name+".json"
         try:
-            self.df=pd.read_csv(path,encoding="cp949")
+            with open(path, encoding="utf-8") as json_file: self.data = json.load(json_file)
         except FileNotFoundError:
-            try: self.df=pd.read_csv("Duet/"+path,encoding="cp949")
-            except FileNotFoundError: self.df=pd.read_csv("./../Duet/"+path,encoding="cp949")
-        max_obs=len(self.df)
-        self.df_list=[list(self.df.loc[i].to_dict().values()) for i in range(max_obs)]
-        for i in range(len(self.df_list)):
-            for j in range(len(self.df_list[i])):
-                if str(self.df_list[i][j])=="nan":
-                    self.df_list[i][j]=0
-        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in self.df_list])
+            try:
+                with open("Duet/" + path, encoding="utf-8") as json_file: self.data = json.load(json_file)
+            except FileNotFoundError:
+                with open("./../Duet/" + path, encoding="utf-8") as json_file: self.data = json.load(json_file)
+                 
+        self.data_list=[[0 if v==None else v for v in obs.values()] for obs in self.data["obstacles"]]
+        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in self.data_list])
         self.rewind=False
         self.progress=0
         self.pause_tick=0
         if next_level:
             self.next_level=Level(next_level)
-
+ 
     def is_level_finished(self):
         return all([o.is_finish() for o in self.obs_group])
 
     def reset(self):
-        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in self.df_list])
+        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in self.data_list])
 
     def update(self):
         # print(round(min([Vector2(*o.rect.center).distance_to(setting.PLAYER_CENTER["ingame"]) for o in self.obs_group]),2))
         if not self.pause_tick:
             if self.rewind:
                 for o in self.obs_group: o.update(-self.progress/(setting.FRAME*0.8))
-                if all(self.obs_group.sprites()[i].rect.y<=self.df.loc[i].to_dict()["y"] for i in range(len(self.obs_group))):
+                if all(self.obs_group.sprites()[i].rect.y<=self.data.loc[i].to_dict()["y"] for i in range(len(self.obs_group))):
                     for o in self.obs_group:
                         o.rect.topleft=o.x,o.y
                         o.rect.size=o.w,o.h
