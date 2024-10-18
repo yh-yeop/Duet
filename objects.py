@@ -262,7 +262,7 @@ class Button(Objects):
 
     def mouse_check(self,mouse,click):
         re_value=pygame.sprite.collide_mask(self,mouse),click if self.alpha in (255,170) else None,click
-        if re_value[0]: self.alpha=170
+        self.alpha=170 if re_value[0] else 255
         return re_value
     
     def blit(self,background):
@@ -598,7 +598,7 @@ class Level:
         if not self.pause_tick:
             if self.rewind:
                 for o in self.obs_group: o.update(-self.progress/(setting.FRAME*0.8))
-                if all(self.obs_group.sprites()[i].rect.y<=self.data.loc[i].to_dict()["y"] for i in range(len(self.obs_group))):
+                if all(o.rect.y<=o.y for o in self.obs_group):
                     for o in self.obs_group:
                         o.rect.topleft=o.x,o.y
                         o.rect.size=o.w,o.h
