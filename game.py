@@ -6,7 +6,7 @@ from util import *
 
 class Duet(Setting):
     def __init__(self):
-        print("1: 박스 활성화/비활성화\n2: 무적 활성화/비활성화\n3: 일시정지 활성화/비활성화\n4: 장애물 페인트 초기화\nesc: 인트로 스킵, 일시정지\nm: 음소거 활성화/비활성화")
+        print("F1: 도움말")
         super().__init__()
         self.init_pygame()
         self.player=pygame.sprite.Group(Player(self.RED,self.PLAYER_CENTER["menu"],"left"),
@@ -44,12 +44,16 @@ class Duet(Setting):
         pygame.display.set_caption("Duet")
         icon=return_image("icon.jpg")
         pygame.display.set_icon(icon)
-        try: pygame.mixer.music.load("assets/sound/Theme_from_Duet.mp3")
-        except pygame.error:
-            try: pygame.mixer.music.load("Duet/assets/sound/Theme_from_Duet.mp3")
-            except pygame.error: pygame.mixer.music.load("./../Duet/assets/sound/Theme_from_Duet.mp3")
-        pygame.mixer.music.play(-1)
+        self.set_bgm("Theme_from_Duet")
         
+
+    def set_bgm(self,name):
+        path="assets/sound/bgm/"
+        try: pygame.mixer.music.load(path+name+".mp3")
+        except pygame.error:
+            try: pygame.mixer.music.load("Duet/"+path+name+".mp3")
+            except pygame.error: pygame.mixer.music.load("./../Duet/"+path+name+".mp3")
+        pygame.mixer.music.play(-1)
 
     def mainloop(self):
         while True:
@@ -101,17 +105,14 @@ class Duet(Setting):
                             self.direction=-1
                         if event.key==pygame.K_RIGHT:
                             self.direction=1
-
-                if event.key==pygame.K_ESCAPE:
-                    if self.intro.is_screen:
-                        print("인트로 스킵")
-                        self.intro.skip=True
-                    elif self.in_game.is_screen:
+                    if event.key==pygame.K_ESCAPE:
                         if not self.pause:
                             self.direction=0
                             self.pause=True
                             self.pause_screen.screen_onoff(True)
                             print(f"일시정지: {self.pause}")
+
+                    
                 
                 if self.menu.is_screen:
                     if event.key==pygame.K_LEFT:
@@ -121,44 +122,58 @@ class Duet(Setting):
                         self.menu.set_direction(-1)
                         print("플레이 메뉴(키보드)")
 
-                if event.key==pygame.K_0:
-                    print("플레이어 위치 초기화")
-                    self.player.sprites()[0].angle=180
-                    self.player.sprites()[1].angle=0
 
-                if event.key==pygame.K_1:
-                    Objects.onoff_box()
-                    print(f"박스: {Objects.box}")
+                if True: # 테스트용 기능
+                    if event.key==pygame.K_F1:
+                        print("\nF1: 도움말\nF2: 박스 활성화/비활성화\nF3: 무적 활성화/비활성화\nF4: 장애물 페인트 초기화\nF5: 플레이어 위치 초기화\nF6: 테스트 페인트 초기화\nF7: 플레이어 사망\nesc: 인트로 스킵\nM: 음소거 활성화/비활성화\n")
+                    
+                    if event.key==pygame.K_F2:
+                        Objects.onoff_box()
+                        print(f"박스: {Objects.box}")
+                    
+                    if event.key==pygame.K_F3:
+                        for o in self.in_game.level.obs_group:
+                            o.update_invincible()
+                        print(f"무적: {self.in_game.level.obs_group.sprites()[0].invincible}")
 
-                if event.key==pygame.K_2:
-                    for o in self.in_game.level.obs_group:
-                        o.update_invincible()
-                    print(f"무적: {self.in_game.level.obs_group.sprites()[0].invincible}")
+                    if event.key==pygame.K_F4:
+                        print("장애물 페인트 초기화")
+                        for o in self.in_game.level.obs_group:
+                            o.reset()
+                    
+                    if event.key==pygame.K_F5:
+                        print("플레이어 위치 초기화")
+                        self.player.sprites()[0].angle=180
+                        self.player.sprites()[1].angle=0
+
+                    if event.key==pygame.K_F6:
+                        print("테스트 페인트 초기화")
+                        for o in self.in_game.level.obs_group:
+                            o.reset2()
+
+                    if event.key==pygame.K_F7:
+                        print("플레이어 사망")
+                        for p in self.player:
+                            p.die()
+
+                    if event.key==pygame.K_m:
+                        print("음소거: ",end="")
+                        if pygame.mixer.music.get_volume():
+                            print("ON")
+                            pygame.mixer.music.set_volume(0)
+                        else:
+                            print("OFF")
+                            pygame.mixer.music.set_volume(1)
+
+                    if event.key==pygame.K_ESCAPE:
+                        if self.intro.is_screen:
+                            print("인트로 스킵")
+                            self.intro.skip=True
+                
 
 
-                if event.key==pygame.K_4:
-                    print("장애물 페인트 초기화")
-                    for o in self.in_game.level.obs_group:
-                        o.reset()
 
-                if event.key==pygame.K_5:
-                    print("테스트 페인트 초기화")
-                    for o in self.in_game.level.obs_group:
-                        o.reset2()
 
-                if event.key==pygame.K_m:
-                    print("음소거: ",end="")
-                    if pygame.mixer.music.get_volume():
-                        print("ON")
-                        pygame.mixer.music.set_volume(0)
-                    else:
-                        print("OFF")
-                        pygame.mixer.music.set_volume(1)
-
-                if event.key==pygame.K_r:
-                    print("플레이어 사망")
-                    for p in self.player:
-                        p.die()
 
 
             if event.type==pygame.KEYUP:

@@ -11,7 +11,7 @@ def return_sound(name):
         try: return pygame.mixer.Sound("Duet/"+name)
         except FileNotFoundError: return pygame.mixer.Sound("./../Duet/"+name)
 
-def return_image(name="lv.png",size=False):
+def return_image(name="lv.png",size=None):
     name="assets/image/"+name
     try:
         image=pygame.image.load(name)

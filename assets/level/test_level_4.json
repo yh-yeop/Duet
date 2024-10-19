@@ -8,12 +8,12 @@
         {
             "shape": "rect",
             "dx": null,
-            "dy": null,
-            "x": null,
-            "y": -500,
-            "w": 230,
-            "h": 38,
-            "angle": 30,
+            "dy": 2,
+            "x": 150,
+            "y": 0,
+            "w": 200,
+            "h": 200,
+            "angle": 0,
             "angle_plus": null,
             "dx_plus": null,
             "dy_plus": null
