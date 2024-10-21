@@ -1,6 +1,6 @@
 import pygame
 from setting import Setting
-from objects import Objects,Hitbox,Player,PlayerParticle,Intro,Menu,InGame,set_speed,PauseScreen
+from objects import Objects,Hitbox,Player,PlayerParticle,Intro,Menu,InGame,set_speed,PauseScreen,Vector2
 from util import *
 
 
@@ -29,13 +29,13 @@ class Duet(Setting):
 
         self.check={"menu":{"main":None,
                             "play":None,
-                            "setting":None},
+                            "setting":None,
+                            "main_screen":None},
                     "pause":None
                             }
-        
-        self.play=True
+        self.check[""]
 
-        self.gameover=False
+        self.play=True
 
 
     def init_pygame(self):
@@ -90,6 +90,7 @@ class Duet(Setting):
         events=pygame.event.get()
         if not events:
             self.check["menu"]["main"],self.check["menu"]["play"],self.check["menu"]["setting"]=self.menu.button_check(self.mouse_hitbox,False)
+            self.check["menu"]["main_screen"]=None
             self.check["pause"]=self.pause_screen.button_check(self.mouse_hitbox,False)
 
         for event in events:
@@ -186,6 +187,9 @@ class Duet(Setting):
             if not self.intro.is_screen:
                 if self.menu.is_screen:
                     self.check["menu"]["main"],self.check["menu"]["play"],self.check["menu"]["setting"]=self.menu.button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
+                    if self.menu.now!=self.SCREEN.MAIN:
+                        collide_pos=pygame.sprite.collide_mask(Hitbox(Vector2(setting.SIZE[0]//1.25,0)+self.menu.pos,self.menu.screens[self.SCREEN.MAIN].surface),self.mouse_hitbox)
+                        self.check["menu"]["main_screen"]=collide_pos,event.type==pygame.MOUSEBUTTONDOWN
                 if self.in_game.is_screen:
                     self.check["pause"]=self.pause_screen.button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
 
@@ -214,6 +218,11 @@ class Duet(Setting):
                         self.menu.set_direction(-1)
                     elif all(self.check["menu"]["main"][self.BUTTON.SETTING]):
                         self.menu.set_direction(1)
+                
+                if all(self.check["menu"]["main_screen"]):
+                    if self.check["menu"]["main_screen"][0]<self.menu.screens[self.SCREEN.MAIN].surface.get_size()[0]//2: self.menu.set_direction(-1)
+                    else: self.menu.set_direction(1)
+                
 
                 if self.check["menu"]["play"]:
                     if all(self.check["menu"]["play"][0]):
@@ -222,6 +231,7 @@ class Duet(Setting):
                     elif all(self.check["menu"]["play"][1]):
                         print("test_lv_4")
                         self.set_level("test_level_4")
+
 
 
                 if self.intro.is_intro_done():

@@ -100,7 +100,7 @@ class Player(Objects):
         if not self.death_tick:
             pygame.draw.circle(player_surface,(*self.color,self.alpha),self.rect.topleft,self.r)
 
-        if self.box:
+        if Objects.box:
             box=self.rect.copy()
             box.center=box.topleft
             player_surface.blit(self.image,box.topleft)
@@ -158,26 +158,24 @@ class DeathParticle(Particle):
 
 class Obstacle(Objects):
     def __init__(self,*args):
-        """shape: [rect,special]
-            special: [1,2]"""
-            # args[i]=string_to_int(args[i])
         shape,self.dx,self.dy,self.x,self.y,self.w,self.h,\
             self.angle,self.angle_plus,self.dx_plus,self.dy_plus=args
-        if shape=="rect": image=pygame.Surface((self.w,self.h),pygame.SRCALPHA)
-        else: raise SyntaxError
+        image=pygame.Surface((self.w,self.h),pygame.SRCALPHA)
         image.fill(setting.WHITE)
         super().__init__(Vector2(self.x,self.y),image,self.angle)
         self.invincible=False
         self.pos=list(self.rect.center)
         self.backup_image=self.image.copy()
         self.mask=pygame.mask.from_surface(self.image)
-        self.collide_pos=[]
         self.extra_image_direction=0
 
     def reset(self):
         self.backup_image.fill(setting.WHITE)
-    def reset2(self):
-        self.collide_pos=[]
+    
+    def pos_reset(self):
+        self.rect.topleft=self.x,self.y
+        self.rect.size=self.w,self.h
+        self.pos=self.rect.center
 
     def update_invincible(self,flag=None):
         if flag==None:
@@ -221,10 +219,9 @@ class Obstacle(Objects):
             re_value=[(pygame.sprite.collide_mask(self,players[i]),i) for i in range(2)]
         for row in re_value:
             if row[0]:
-                print("충돌")
                 color="red" if players[row[1]].color==setting.RED else "blue"
-                paint=return_image("paint/"+color+"/"+str(np.random.randint(0,9))+".png")
-                paint=pygame.transform.scale_by(paint,0.07)
+                paint=return_image("paint/"+color+"/"+str(np.random.randint(9))+".png")
+                paint=pygame.transform.rotozoom(paint,np.random.randint(360),0.07)
 
                 if self.angle%90:
                     if self.angle<0:
@@ -233,8 +230,6 @@ class Obstacle(Objects):
                         rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(self.angle%90))))).rotate(-self.angle%90)
                     else:
                         rotate_pos=(Vector2(row[0])-Vector2((self.h*math.sin(math.radians(self.angle))),0)).rotate(-self.angle)
-                    self.collide_pos.append((self.angle,Vector2(row[0])+Vector2(self.rect.topleft)-Vector2(paint.get_size())//2)) # 테스트 페인트
-                    self.collide_pos.append((self.angle,rotate_pos+Vector2(self.rect.topleft)-Vector2(paint.get_size())//2)) # 테스트 페인트
                     self.backup_image.blit(paint,rotate_pos-Vector2(paint.get_size())//2)
 
                     
@@ -247,10 +242,8 @@ class Obstacle(Objects):
     
     def blit(self,background:pygame.Surface):
         background.blit(self.image,self.rect)
-        if self.extra_image_direction: print(self.extra_image_direction)
         if self.extra_image_direction: background.blit(self.image,Vector2(self.rect.topleft)+Vector2(self.extra_image_direction*setting.SIZE[0],0))
-        if self.box:
-            # background.blit(self.backup_image,self.rect)
+        if Objects.box:
             pygame.draw.rect(background,(255,0,0),self.rect,1)
 
 class Button(Objects):
@@ -345,7 +338,7 @@ class Menu(Screen):
     def __init__(self, size=Vector2(*setting.SIZE)+Vector2(2*setting.SIZE[0]//1.25,0)):
         super().__init__(size)
         self.screens=[SettingMenu(),MainMenu(),PlayMenu()]
-        self.pos=[-setting.SIZE[0]//1.25,0]
+        self.pos=Vector2(-setting.SIZE[0]//1.25,0)
         self.now=setting.SCREEN.MAIN
         self.target=setting.SCREEN.MAIN
         self.direction=0

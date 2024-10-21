@@ -3,7 +3,7 @@ from setting import Setting
 setting=Setting()
 
 
-def return_sound(name):
+def return_sound(name:str):
     name="assets/sound/"+name
     try:
         return pygame.mixer.Sound(name)
@@ -20,7 +20,7 @@ def return_image(name="lv.png",size=None):
         except FileNotFoundError: image=pygame.image.load("./../Duet/"+name)
     if size: return pygame.transform.scale(image,size)
     else: return image
-        
+
 def return_font(size=30,name="malgungothic",bold=False,italic=False,isfile=False):
     if isfile:
         name="assets/font/"+name
@@ -36,7 +36,6 @@ def return_text(font:pygame.font.Font,text="test",antialias=True,color=setting.W
 
 
 
-
 def draw_player_circle(background:pygame.Surface,r=setting.CENTER[0]//5*2,alpha=128,center=setting.PLAYER_CENTER["menu"]):
     circle_surface=pygame.Surface(setting.SIZE,pygame.SRCALPHA)
     pygame.draw.circle(circle_surface,(200,200,200,alpha),center,r,1)
@@ -49,8 +48,6 @@ def draw_player(player,background,screen):
         # p.change_center(screen)
         p.center=pos
         p.blit(background)
-
-
 
 def screen_change(screens,screen):
     for s in screens: s.is_screen=False

@@ -7,13 +7,13 @@
     "obstacles": [
         {
             "shape": "rect",
-            "dx": null,
+            "dx": 1,
             "dy": 2,
             "x": 150,
             "y": 0,
             "w": 200,
             "h": 200,
-            "angle": 0,
+            "angle": 135,
             "angle_plus": null,
             "dx_plus": null,
             "dy_plus": null
