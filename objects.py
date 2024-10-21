@@ -211,7 +211,7 @@ class Obstacle(Objects):
         else:
             self.image=self.backup_image
 
-    def collide_check(self,players=list):
+    def collide_check(self,players:list):
         if self.invincible or -400>Vector2(*self.rect.center).distance_to(setting.PLAYER_CENTER["ingame"]) and Vector2(*self.rect.center).distance_to(setting.PLAYER_CENTER["ingame"]) >600:
             re_value=[]
             return re_value
