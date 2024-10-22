@@ -33,7 +33,6 @@ class Duet(Setting):
                             "main_screen":None},
                     "pause":None
                             }
-        self.check[""]
 
         self.play=True
 
@@ -219,7 +218,7 @@ class Duet(Setting):
                     elif all(self.check["menu"]["main"][self.BUTTON.SETTING]):
                         self.menu.set_direction(1)
                 
-                if all(self.check["menu"]["main_screen"]):
+                if self.check["menu"]["main_screen"] and all(self.check["menu"]["main_screen"]):
                     if self.check["menu"]["main_screen"][0]<self.menu.screens[self.SCREEN.MAIN].surface.get_size()[0]//2: self.menu.set_direction(-1)
                     else: self.menu.set_direction(1)
                 

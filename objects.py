@@ -164,7 +164,7 @@ class Obstacle(Objects):
         image.fill(setting.WHITE)
         super().__init__(Vector2(self.x,self.y),image,self.angle)
         self.invincible=False
-        self.pos=list(self.rect.center)
+        self.pos=Vector2(self.rect.center)
         self.backup_image=self.image.copy()
         self.mask=pygame.mask.from_surface(self.image)
         self.extra_image_direction=0
@@ -175,7 +175,7 @@ class Obstacle(Objects):
     def pos_reset(self):
         self.rect.topleft=self.x,self.y
         self.rect.size=self.w,self.h
-        self.pos=self.rect.center
+        self.pos=Vector2(self.rect.center)
 
     def update_invincible(self,flag=None):
         if flag==None:
@@ -204,6 +204,7 @@ class Obstacle(Objects):
             
         if self.angle_plus:
             self.angle+=self.angle_plus*speed*FRAME_SPEED
+            self.angle%=360
         if self.angle:
             self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
             self.rect=self.image.get_rect(center=self.pos)
@@ -583,7 +584,9 @@ class Level:
         return all([o.is_finish() for o in self.obs_group])
 
     def reset(self):
-        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in self.data_list])
+        for o in self.obs_group:
+            o.pos_reset()
+            o.reset()
 
     def update(self):
         if not self.pause_tick:
@@ -591,6 +594,7 @@ class Level:
                 for o in self.obs_group: o.update(-self.progress/(setting.FRAME*0.8))
                 if all(o.rect.y<=o.y for o in self.obs_group):
                     for o in self.obs_group:
+                        o.pos_reset()
                         o.rect.topleft=o.x,o.y
                         o.rect.size=o.w,o.h
                     self.rewind_change(False)
