@@ -227,8 +227,9 @@ class Obstacle(Objects):
                 if self.angle%90:
                     if self.angle<0:
                         rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(abs(self.angle)))))).rotate(-self.angle)
-                    elif self.angle>90: # 고쳐야함
-                        rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(self.angle%90))))).rotate(-self.angle%90)
+                    elif self.angle>90:
+                        rotate_pos=(Vector2(row[0])-Vector2(0,(self.h*math.sin(math.radians(self.angle%90))))).rotate(-self.angle%90)
+                        self.angle-=180
                     else:
                         rotate_pos=(Vector2(row[0])-Vector2((self.h*math.sin(math.radians(self.angle))),0)).rotate(-self.angle)
                     self.backup_image.blit(paint,rotate_pos-Vector2(paint.get_size())//2)
@@ -589,6 +590,7 @@ class Level:
         self.rewind=False
         self.progress=0
         self.pause_tick=0
+        self.text=LevelText(self.data["description"])
         self.next_level=self.data["next"]
  
     def is_level_finished(self):
@@ -613,6 +615,7 @@ class Level:
             else:
                 for o in self.obs_group: o.update()
                 self.progress+=1
+                if self.is_level_finished(): self.__init__(self.next_level)
         else:
             self.pause_tick-=1
 
