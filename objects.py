@@ -297,6 +297,17 @@ class OnOffButton:
 
 
 
+class LevelText(Objects):
+    def __init__(self,text):
+        self.text=text
+        self.alpha=255
+        self.pos=Vector2(0,0)
+        super().__init__(self.pos,return_text(return_font(),self.text))
+        self.rect.center=self.pos
+
+    def update(self):
+        self.pos=max(setting.CENTER[1])
+        
  
 class Intro(Screen):
     def __init__(self):
