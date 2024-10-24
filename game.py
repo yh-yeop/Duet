@@ -209,6 +209,7 @@ class Duet(Setting):
         self.menu.pos=[-setting.SIZE[0]//1.25,0]
 
     def move(self):
+        print(self.in_game.level)
         if not self.pause:
             if not self.rewind_pause:
                 for screen in self.screens: screen.update()

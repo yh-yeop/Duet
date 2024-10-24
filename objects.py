@@ -302,14 +302,19 @@ class LevelText(Objects):
     def __init__(self,text):
         self.text=text
         self.alpha=255
-        self.pos=Vector2(0,0)
+        self.pos=Vector2(setting.CENTER)
         super().__init__(self.pos,return_text(return_font(),self.text))
         self.rect.center=self.pos
 
     def update(self):
-        self.pos=max(setting.CENTER[1])
+        self.alpha=max(self.alpha-3,0)
+        self.image.set_alpha(self.alpha)
+        self.pos[1]=max(setting.CENTER[1]-60,self.pos[1]-0.6)
+        self.rect.center=self.pos
+
+    def is_alive(self): return bool(self.alpha)
         
- 
+
 class Intro(Screen):
     def __init__(self):
         super().__init__()
@@ -576,22 +581,23 @@ class PauseScreen(Screen):
 
 class Level:
     def __init__(self,name):
+        self.name=name
         path="assets/level/"+name+".json"
         try:
-            with open(path, encoding="utf-8") as json_file:self.data=json.load(json_file)
+            with open(path, encoding="utf-8") as json_file:data=json.load(json_file)
         except FileNotFoundError:
             try:
-                with open("Duet/"+path,encoding="utf-8") as json_file:self.data=json.load(json_file)
+                with open("Duet/"+path,encoding="utf-8") as json_file:data=json.load(json_file)
             except FileNotFoundError:
-                with open("./../Duet/"+path,encoding="utf-8") as json_file:self.data=json.load(json_file)
+                with open("./../Duet/"+path,encoding="utf-8") as json_file:data=json.load(json_file)
                  
-        self.data_list=[[0 if v==None else v for v in obs.values()] for obs in self.data["obstacles"]]
-        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in self.data_list])
+        data_list=[[0 if v==None else v for v in obs.values()] for obs in data["obstacles"]]
+        self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in data_list])
         self.rewind=False
         self.progress=0
         self.pause_tick=0
-        self.text=LevelText(self.data["description"])
-        self.next_level=self.data["next"]
+        self.text=LevelText(data["description"])
+        self.next_level=data["next"]
  
     def is_level_finished(self):
         return all([o.is_finish() for o in self.obs_group])
@@ -602,22 +608,25 @@ class Level:
             o.reset()
 
     def update(self):
-        if not self.pause_tick:
-            if self.rewind:
-                for o in self.obs_group: o.update(-self.progress/(setting.FRAME*0.8))
-                if all(o.rect.y<=o.y for o in self.obs_group):
-                    for o in self.obs_group:
-                        o.pos_reset()
-                        o.rect.topleft=o.x,o.y
-                        o.rect.size=o.w,o.h
-                    self.rewind_change(False)
-                    self.progress=0
+        if self.text.is_alive():
+            if not self.pause_tick:
+                if self.rewind:
+                    for o in self.obs_group: o.update(-self.progress/(setting.FRAME*0.8))
+                    if all(o.rect.y<=o.y for o in self.obs_group):
+                        for o in self.obs_group:
+                            o.pos_reset()
+                            o.rect.topleft=o.x,o.y
+                            o.rect.size=o.w,o.h
+                        self.rewind_change(False)
+                        self.progress=0
+                else:
+                    for o in self.obs_group: o.update()
+                    self.progress+=1
+                    if self.is_level_finished() and self.next_level: self.__init__(self.next_level)
             else:
-                for o in self.obs_group: o.update()
-                self.progress+=1
-                if self.is_level_finished(): self.__init__(self.next_level)
+                self.pause_tick-=1
         else:
-            self.pause_tick-=1
+            self.text.update()
 
 
     def rewind_change(self,flag=True):
@@ -640,5 +649,11 @@ class Level:
         return re_value if len(re_value)!=1 else re_value[0]
 
     def blit(self,background:pygame.Surface):
+        if self.text.is_alive():
+            background.blit(self.text.image,self.text.rect)
         for obs in self.obs_group:
             obs.blit(background)
+
+
+    def __str__(self):
+        return self.name

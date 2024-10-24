@@ -1,7 +1,7 @@
 {
     "speed":1.0,
     "name":"튜토리얼-1",
-    "description":"",
+    "description":"abc",
     "rotate":10,
     "next":"tutorial_2",
     "obstacles": [
