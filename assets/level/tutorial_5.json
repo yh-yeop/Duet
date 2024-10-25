@@ -1,21 +1,21 @@
 {
     "speed":1.0,
     "name":"튜토리얼-5",
-    "description":"This is test sentence.",
+    "description":"당신의 직감을 믿으세요.",
     "rotate":10,
     "next":null,
     "obstacles": [
         {
             "shape": "rect",
-            "dx": 0,
+            "dx": 0.6,
             "dy": 2,
-            "x": 0,
-            "y": -150,
+            "x": -80,
+            "y": -190,
             "w": 220,
             "h": 38,
-            "angle": null,
+            "angle": -15,
             "angle_plus": null,
-            "dx_plus": 0.004,
+            "dx_plus": null,
             "dy_plus": null
         }
     ]

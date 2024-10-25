@@ -169,6 +169,11 @@ class Duet(Setting):
                         if self.intro.is_screen:
                             print("인트로 스킵")
                             self.intro.skip=True
+
+                    if event.key==pygame.K_s:
+                        if self.in_game.is_screen:
+                            print("레벨 스킵")
+                            self.in_game.level.skip=True
                 
 
 

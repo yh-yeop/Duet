@@ -9,6 +9,8 @@ class Setting:
         self.FRAME=120
         self.PLAYER_CENTER={"ingame":(self.CENTER[0],self.SIZE[1]//8*7),
                             "menu":self.CENTER}
+        self.eng_font="Montserrat/static/Montserrat-Thin.ttf"
+        self.kor_font="Noto_Sans_KR/static/NotoSansKR-Regular.ttf"
         # self.BUTTON={"SETTING":0,
         #              "PLAY":1}
         

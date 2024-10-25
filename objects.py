@@ -160,6 +160,7 @@ class Obstacle(Objects):
     def __init__(self,*args):
         shape,self.dx,self.dy,self.x,self.y,self.w,self.h,\
             self.angle,self.angle_plus,self.dx_plus,self.dy_plus=args
+        self.backup_angle=self.angle
         image=pygame.Surface((self.w,self.h),pygame.SRCALPHA)
         image.fill(setting.WHITE)
         super().__init__(Vector2(self.x,self.y),image,self.angle)
@@ -203,8 +204,7 @@ class Obstacle(Objects):
                 self.rect.move_ip(setting.SIZE[0],0)
             
         if self.angle_plus:
-            self.angle+=self.angle_plus*speed*FRAME_SPEED
-            self.angle%=360
+            self.angle=(self.angle+self.angle_plus*speed*FRAME_SPEED)%360
         if self.angle:
             self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
             self.rect=self.image.get_rect(center=self.pos)
@@ -227,9 +227,8 @@ class Obstacle(Objects):
                 if self.angle%90:
                     if self.angle<0:
                         rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(abs(self.angle)))))).rotate(-self.angle)
-                    elif self.angle>90:
-                        rotate_pos=(Vector2(row[0])-Vector2(0,(self.h*math.sin(math.radians(self.angle%90))))).rotate(-self.angle%90)
-                        self.angle-=180
+                    elif self.angle>90: # 고쳐야함
+                        rotate_pos=(Vector2(row[0])-Vector2(0,(self.w*math.sin(math.radians(abs((self.angle%90)-90)))))).rotate(self.angle%90)
                     else:
                         rotate_pos=(Vector2(row[0])-Vector2((self.h*math.sin(math.radians(self.angle))),0)).rotate(-self.angle)
                     self.backup_image.blit(paint,rotate_pos-Vector2(paint.get_size())//2)
@@ -301,16 +300,29 @@ class OnOffButton:
 class LevelText(Objects):
     def __init__(self,text):
         self.text=text
-        self.alpha=255
-        self.pos=Vector2(setting.CENTER)
-        super().__init__(self.pos,return_text(return_font(),self.text))
+        self.alpha=50
+        self.pos=Vector2(setting.CENTER)-Vector2(0,60)
+        super().__init__(self.pos,return_text(return_font(30,setting.kor_font,isfile=True),self.text))
         self.rect.center=self.pos
+        self.wait_tick=setting.FRAME
 
     def update(self):
-        self.alpha=max(self.alpha-3,0)
-        self.image.set_alpha(self.alpha)
-        self.pos[1]=max(setting.CENTER[1]-60,self.pos[1]-0.6)
-        self.rect.center=self.pos
+        if self.wait_tick:
+            self.wait_tick-=1
+            self.alpha=min(self.alpha+2.5,255)
+            self.image.set_alpha(self.alpha)
+            self.pos[1]+=0.35
+            self.rect.center=self.pos
+            
+        else:
+            self.alpha=max(self.alpha-0.7,0)
+            self.image.set_alpha(self.alpha)
+            self.pos[1]+=0.25
+            self.rect.center=self.pos
+
+
+    def blit(self,background:pygame.Surface):
+        background.blit(self.image,self.rect)
 
     def is_alive(self): return bool(self.alpha)
         
@@ -322,10 +334,10 @@ class Intro(Screen):
         self.alpha=30
         self.skip=False
         self.r=setting.SIZE[1]+200
-        self.texts=[(return_text(return_font(30,self.kor_font),"제작",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]-50]),
-                    (return_text(return_font(30,self.eng_font,isfile=True),"Yoon Ho Yeop",color=setting.BLACK),list(setting.CENTER)),
-                    (return_text(return_font(30,self.kor_font),"음악",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]+50]),
-                    (return_text(return_font(30,self.eng_font,isfile=True),"Tim Shiel",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]+100])]
+        self.texts=[(return_text(return_font(30,setting.kor_font,isfile=True),"제작",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]-50]),
+                    (return_text(return_font(30,setting.eng_font,isfile=True),"Yoon Ho Yeop",color=setting.BLACK),list(setting.CENTER)),
+                    (return_text(return_font(30,setting.kor_font,isfile=True),"음악",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]+50]),
+                    (return_text(return_font(30,setting.eng_font,isfile=True),"Tim Shiel",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]+100])]
                 
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 
@@ -429,7 +441,7 @@ class MainMenu(Screen):
     def __init__(self):
         super().__init__()
         self.start=False
-        self.text=[return_text(return_font(120,self.eng_font,isfile=True),"DUET"),Vector2(setting.CENTER[0],0)]
+        self.text=[return_text(return_font(120,setting.eng_font,isfile=True),"DUET"),Vector2(setting.CENTER[0],0)]
         self.text[1]-=Vector2(*self.text[0].get_size())//2
         self.text[1][1]-=self.text[0].get_size()[1]//2
         self.button_size=60
@@ -475,7 +487,7 @@ class PlayMenu(Screen):
                       ]
         
         self.texts=[
-            (return_text(return_font(25,self.kor_font),"플레이",color=setting.WHITE),Vector2(self.surface.get_size()[0]//2,10))
+            (return_text(return_font(25),"플레이",color=setting.WHITE),Vector2(self.surface.get_size()[0]//2,10))
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 
@@ -504,7 +516,7 @@ class SettingMenu(Screen):
     def __init__(self):
         super().__init__((setting.SIZE[0]//1.25,setting.SIZE[1]))
         self.texts=[
-            (return_text(return_font(30,self.kor_font),"설정",color=setting.BLACK),Vector2(self.surface.get_size()[0]//2,10))
+            (return_text(return_font(30),"설정",color=setting.BLACK),Vector2(self.surface.get_size()[0]//2,10))
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
         self.buttons=[OnOffButton()]
@@ -598,9 +610,12 @@ class Level:
         self.pause_tick=0
         self.text=LevelText(data["description"])
         self.next_level=data["next"]
+        self.skip=False
  
     def is_level_finished(self):
-        return all([o.is_finish() for o in self.obs_group])
+        re_value=all([o.is_finish() for o in self.obs_group]) or self.skip
+        self.skip=False
+        return re_value
 
     def reset(self):
         for o in self.obs_group:
@@ -608,7 +623,7 @@ class Level:
             o.reset()
 
     def update(self):
-        if self.text.is_alive():
+        if not self.text.is_alive():
             if not self.pause_tick:
                 if self.rewind:
                     for o in self.obs_group: o.update(-self.progress/(setting.FRAME*0.8))
@@ -617,6 +632,7 @@ class Level:
                             o.pos_reset()
                             o.rect.topleft=o.x,o.y
                             o.rect.size=o.w,o.h
+                            o.angle=o.backup_angle
                         self.rewind_change(False)
                         self.progress=0
                 else:
@@ -626,6 +642,7 @@ class Level:
             else:
                 self.pause_tick-=1
         else:
+            if self.is_level_finished() and self.next_level: self.__init__(self.next_level)
             self.text.update()
 
 
@@ -649,8 +666,7 @@ class Level:
         return re_value if len(re_value)!=1 else re_value[0]
 
     def blit(self,background:pygame.Surface):
-        if self.text.is_alive():
-            background.blit(self.text.image,self.text.rect)
+        if self.text.is_alive(): self.text.blit(background)
         for obs in self.obs_group:
             obs.blit(background)
 

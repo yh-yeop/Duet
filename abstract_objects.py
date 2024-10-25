@@ -32,8 +32,6 @@ class Objects(pygame.sprite.Sprite):
 class Screen:
     def __init__(self,size=setting.SIZE):
         self.surface=pygame.Surface(size,pygame.SRCALPHA)
-        self.eng_font="Montserrat/static/Montserrat-Thin.ttf"
-        self.kor_font="malgungothic"
         self.pos=(0,0)
         self.is_screen=False
 

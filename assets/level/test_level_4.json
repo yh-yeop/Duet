@@ -1,7 +1,7 @@
 {
     "speed":1.0,
     "name":"튜토리얼-1",
-    "sentence":"This is test sentence.",
+    "description":"This is test sentence.",
     "rotate":10,
     "next":"level_2",
     "obstacles": [
@@ -12,8 +12,8 @@
             "x": 150,
             "y": 0,
             "w": 200,
-            "h": 200,
-            "angle": 135,
+            "h": 100,
+            "angle": 120,
             "angle_plus": null,
             "dx_plus": null,
             "dy_plus": null
