@@ -283,7 +283,7 @@ class MenuButton(Button):
 
 
 class OnOffButton:
-    def __init__(self,text="배경 음악",flag=True,pos=Vector2(0,200)):
+    def __init__(self,text="Test",flag=True,pos=Vector2(0,200)):
         self.image=pygame.Surface((setting.SIZE[0]//1.25,50))
         self.image.fill(setting.WHITE)
         self.image.blit(return_text(return_font(30,setting.KOR_FONT,isfile=True),text,color=setting.BLACK),(20,0))
@@ -530,7 +530,7 @@ class SettingMenu(Screen):
             (return_text(return_font(30),"설정",color=setting.BLACK),Vector2(self.surface.get_size()[0]//2,10))
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
-        self.buttons=[OnOffButton()]
+        self.buttons=[OnOffButton("배경 음악")]
 
     def button_check(self,mouse:Hitbox,click:bool):
         for b in self.buttons: b.mouse_check(mouse,click)
