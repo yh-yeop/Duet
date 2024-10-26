@@ -24,12 +24,14 @@ class Hitbox(Objects):
     def blit(self,background:pygame.Surface):
         background.blit(self.image,self.rect)
 
+
 class Player(Objects):
     speed=2
     r=12
     distance=setting.CENTER[0]//5*2
     rewind_angle=0
     center=setting.PLAYER_CENTER["menu"]
+    reset_direction=0
     def __init__(self,color:tuple,center:tuple,direction:str):
         self.center=Vector2(center)
         self.angle=180 if direction=="left" else 0
@@ -44,6 +46,11 @@ class Player(Objects):
         self.rewind=[None,0]
         self.death_tick=0
         self.death_particle_group=pygame.sprite.Group()
+
+    @classmethod
+    def set_player_reset(cls,direction:int):
+        cls.reset_direction=direction
+
 
     @classmethod
     def set_rewind_angle(cls,angle:int):
@@ -66,28 +73,35 @@ class Player(Objects):
 
     def update(self,angle_plus:int):
         if not self.death_tick:
-            if not self.rewind[1]:
-                self.angle=(self.angle+angle_plus*self.speed*FRAME_SPEED)%360
+            if not Player.reset_direction:
+                if not self.rewind[1]: self.angle=(self.angle+angle_plus*self.speed*FRAME_SPEED)%360
+            
+                else:
+                    self.angle=(self.angle+self.rewind[0])%360
+                    self.rewind[1]-=1
+                    if not self.rewind[1]: self.angle=round(self.angle)%360
+
             else:
-                self.angle=(self.angle+self.rewind[0])%360
-                self.rewind[1]-=1
-                if not self.rewind[1]:
-                    self.angle=round(self.angle)%360
-                    # color=" red" if self.color==setting.RED else "blue"
-                    # print(f"color: {color} angle: {self.angle}")
-                    # # print(f"color: {" red" if self.color==setting.RED else "blue"} angle: {self.angle}")
-        else:
-            self.death_tick-=1
+                self.angle=(self.angle+Player.reset_direction*(self.speed//2)*FRAME_SPEED)%360
+                for i in [abs(self.angle-i) for i in (0,180)]:
+                    if i<1:
+                        self.angle=round(self.angle)
+                        
+        else: self.death_tick-=1
+
+
         self.rect.center=self.center+Vector2(self.distance,0).rotate(self.angle)
-        if angle_plus:
-            self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,self.angle))
-        else:
-            self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,0))
+        
+        if angle_plus: self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,self.angle))
+        else: self.particle_group.add(PlayerParticle(self.color,self.rect.topleft,0))
+        
         self.particle_group.update()
         self.death_particle_group.update()
+        
         for dp in self.death_particle_group:
             if not (dp.rect.x in range(setting.SIZE[0]+1) and dp.rect.y in range(setting.SIZE[1]+1)):
                 self.death_particle_group.remove(dp)
+        
         for p in self.particle_group:
             if (not p.image.get_alpha()) or (not p.size):
                 self.particle_group.remove(p)
@@ -108,14 +122,14 @@ class Player(Objects):
 
 class PlayerParticle(Particle):
     dy=0
-    def __init__(self, color, pos=Vector2(0,0),angle=0):
+    def __init__(self, color:tuple, pos=Vector2(0,0),angle=0):
         super().__init__(color,(17,10),pos,angle)
         self.image=pygame.transform.rotozoom(self.image,self.angle,1)
         self.blit_image=self.image.copy()
         self.alpha=128
 
     @classmethod
-    def set_dy(cls,dy):
+    def set_dy(cls,dy:int):
         cls.dy=dy
 
         
@@ -131,7 +145,6 @@ class PlayerParticle(Particle):
         blit_pos=Vector2(*self.rect.topleft)-Vector2(*self.blit_image.get_size())//2
         background.blit(self.blit_image,blit_pos)
 
-
 class DeathParticle(Particle):
     def __init__(self, color,pos=Vector2(0,0)):
         super().__init__(color,(3,3),pos)
@@ -139,10 +152,6 @@ class DeathParticle(Particle):
         self.dy=-np.random.randint(1500,5000)/1000
         self.pos=Vector2(self.rect.topleft)
         self.alpha=np.random.randint(128,255)
-        """
-            -500~500 / 1000 = -1.0~1.0 (좀더 많은 경우의 수)
-            -50~50 / 100 = -1.5~5.0
-        """
 
     def update(self):
         super().update()
@@ -274,35 +283,37 @@ class MenuButton(Button):
 
 
 class OnOffButton:
-    def __init__(self,text="Test",flag=True,pos=Vector2(0,200)):
-        self.image=pygame.Surface((setting.SIZE[0]//1.25,setting.SIZE[1]))
+    def __init__(self,text="배경 음악",flag=True,pos=Vector2(0,200)):
+        self.image=pygame.Surface((setting.SIZE[0]//1.25,50))
         self.image.fill(setting.WHITE)
-        self.image.blit(return_text(return_font(),text),(0,0))
-        self.buttons=[Button(return_text(return_font(),"켜기",color=setting.BLUE)),
-                      Button(return_text(return_font(),"끄기",color=setting.RED))]
+        self.image.blit(return_text(return_font(30,setting.KOR_FONT,isfile=True),text,color=setting.BLACK),(20,0))
+        self.buttons=[Button(return_text(return_font(30,setting.KOR_FONT,isfile=True),"끄기",color=setting.RED)),
+                      Button(return_text(return_font(30,setting.KOR_FONT,isfile=True),"켜기",color=setting.BLUE))]
         self.pos=pos
-        for b in self.buttons: b.rect.topright=(self.image.get_size()[0],self.pos[1])
+        for b in self.buttons: b.rect.topright=(self.image.get_size()[0],1)
         self.flag=flag
         self.image.fill(setting.WHITE,self.buttons[int(self.flag)].rect)
         self.buttons[int(self.flag)].blit(self.image)
+        pygame.draw.line(self.image,(128,128,128),Vector2(self.image.get_rect().bottomleft)+Vector2(5,-1),Vector2(self.image.get_rect().bottomright)-Vector2(5,1))
 
-    def mouse_check(self,mouse,click):
-        if any([all(b.mouse_check(mouse,click)) for b in self.buttons]):
+    def mouse_check(self,mouse:Hitbox,click:bool):
+        if pygame.sprite.collide_mask(Hitbox(self.pos,self.image),mouse) and click:
             self.flag=not self.flag
             self.image.fill(setting.WHITE,self.buttons[int(self.flag)].rect)
             self.buttons[int(self.flag)].blit(self.image)
     
     def blit(self,background:pygame.Surface):
         background.blit(self.image,self.pos)
+        if Objects.box: pygame.draw.rect(background,(255,0,0),(*self.pos,*self.image.get_size()),1)
 
 
 
 class LevelText(Objects):
-    def __init__(self,text):
+    def __init__(self,text:str):
         self.text=text
         self.alpha=50
         self.pos=Vector2(setting.CENTER)-Vector2(0,60)
-        super().__init__(self.pos,return_text(return_font(30,setting.kor_font,isfile=True),self.text))
+        super().__init__(self.pos,return_text(return_font(30,setting.KOR_FONT,isfile=True),self.text))
         self.rect.center=self.pos
         self.wait_tick=setting.FRAME
 
@@ -334,10 +345,10 @@ class Intro(Screen):
         self.alpha=30
         self.skip=False
         self.r=setting.SIZE[1]+200
-        self.texts=[(return_text(return_font(30,setting.kor_font,isfile=True),"제작",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]-50]),
-                    (return_text(return_font(30,setting.eng_font,isfile=True),"Yoon Ho Yeop",color=setting.BLACK),list(setting.CENTER)),
-                    (return_text(return_font(30,setting.kor_font,isfile=True),"음악",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]+50]),
-                    (return_text(return_font(30,setting.eng_font,isfile=True),"Tim Shiel",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]+100])]
+        self.texts=[(return_text(return_font(30,setting.KOR_FONT,isfile=True),"제작",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]-50]),
+                    (return_text(return_font(30,setting.ENG_FONT,isfile=True),"Yoon Ho Yeop",color=setting.BLACK),list(setting.CENTER)),
+                    (return_text(return_font(30,setting.KOR_FONT,isfile=True),"음악",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]+50]),
+                    (return_text(return_font(30,setting.ENG_FONT,isfile=True),"Tim Shiel",color=setting.BLACK),[setting.CENTER[0],setting.CENTER[1]+100])]
                 
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 
@@ -369,32 +380,32 @@ class Menu(Screen):
         super().__init__(size)
         self.screens=[SettingMenu(),MainMenu(),PlayMenu()]
         self.pos=Vector2(-setting.SIZE[0]//1.25,0)
-        self.now=setting.SCREEN.MAIN
-        self.target=setting.SCREEN.MAIN
+        self.now=setting.MENU_SCREEN["MAIN"]
+        self.target=setting.MENU_SCREEN["MAIN"]
         self.direction=0
         
     def set_direction(self,direction:int):
-        if self.screens[setting.SCREEN.MAIN].is_intro_finished():
+        if self.screens[setting.MENU_SCREEN["MAIN"]].is_intro_finished():
             if -self.direction==direction:
                 self.now-=self.direction
             if self.direction==direction:
-                self.now=setting.SCREEN.MAIN
+                self.now=setting.MENU_SCREEN["MAIN"]
             self.direction=direction
 
-    def button_check(self,mouse,click):
+    def button_check(self,mouse:Hitbox,click:bool):
         re_value=[]
         if self.pos[0]==-setting.SIZE[0]//1.25:
-            re_value.append(self.screens[setting.SCREEN.MAIN].button_check(mouse,click))
+            re_value.append(self.screens[setting.MENU_SCREEN["MAIN"]].button_check(mouse,click))
         else:
             re_value.append(None)
 
         if self.pos[0]==-setting.SIZE[0]//1.25*2:
-            re_value.append(self.screens[setting.SCREEN.PLAY].button_check(mouse,click))
+            re_value.append(self.screens[setting.MENU_SCREEN["PLAY"]].button_check(mouse,click))
         else:
             re_value.append(None)
 
         if self.pos[0]==0:
-            re_value.append(self.screens[setting.SCREEN.SETTING].button_check(mouse,click))
+            re_value.append(self.screens[setting.MENU_SCREEN["SETTING"]].button_check(mouse,click))
         else:
             re_value.append(None)
         return re_value
@@ -404,26 +415,26 @@ class Menu(Screen):
         # print(f"self.target: {self.target}, self.now: {self.now}, self.direction: {self.direction}")
         self.pos[0]=min(max(self.pos[0]+13*self.direction,-setting.SIZE[0]//1.25*2),0)
         if self.pos[0]==0:
-            self.now=setting.SCREEN.SETTING
+            self.now=setting.MENU_SCREEN["SETTING"]
             self.direction=0
         elif self.pos[0]==-setting.SIZE[0]//1.25*2:
-            self.now=setting.SCREEN.PLAY
+            self.now=setting.MENU_SCREEN["PLAY"]
             self.direction=0
-        if self.now!=setting.SCREEN.MAIN:
-            if self.now==setting.SCREEN.PLAY:
+        if self.now!=setting.MENU_SCREEN["MAIN"]:
+            if self.now==setting.MENU_SCREEN["PLAY"]:
                 self.pos[0]=min(self.pos[0],-setting.SIZE[0]//1.25)
-            if self.now==setting.SCREEN.SETTING:
+            if self.now==setting.MENU_SCREEN["SETTING"]:
                 self.pos[0]=max(self.pos[0],-setting.SIZE[0]//1.25)
 
             if self.pos[0]==-setting.SIZE[0]//1.25:
-                self.now=setting.SCREEN.MAIN
+                self.now=setting.MENU_SCREEN["MAIN"]
                 self.direction=0
 
         if self.pos[0]!=-setting.SIZE[0]//1.25:
-            for b in self.screens[setting.SCREEN.MAIN].buttons:
+            for b in self.screens[setting.MENU_SCREEN["MAIN"]].buttons:
                 b.plus_alpha(-6)
         else:
-            for b in self.screens[setting.SCREEN.MAIN].buttons:
+            for b in self.screens[setting.MENU_SCREEN["MAIN"]].buttons:
                 b.plus_alpha(6)
 
 
@@ -441,7 +452,7 @@ class MainMenu(Screen):
     def __init__(self):
         super().__init__()
         self.start=False
-        self.text=[return_text(return_font(120,setting.eng_font,isfile=True),"DUET"),Vector2(setting.CENTER[0],0)]
+        self.text=[return_text(return_font(120,setting.ENG_FONT,isfile=True),"DUET"),Vector2(setting.CENTER[0],0)]
         self.text[1]-=Vector2(*self.text[0].get_size())//2
         self.text[1][1]-=self.text[0].get_size()[1]//2
         self.button_size=60
@@ -467,7 +478,7 @@ class MainMenu(Screen):
     def fill(self):
         self.surface.fill(setting.BLACK)
 
-    def button_check(self,mouse,click):
+    def button_check(self,mouse:Hitbox,click:bool):
         for button in self.buttons:
             if button==self.buttons[0] and all(button.mouse_check(mouse,click)): print("설정 메뉴(마우스)")
             elif button==self.buttons[1] and all(button.mouse_check(mouse,click)): print("플레이 메뉴(마우스)")
@@ -491,7 +502,7 @@ class PlayMenu(Screen):
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 
-    def button_check(self,mouse,click):
+    def button_check(self,mouse:Hitbox,click:bool):
         for b in self.buttons: b.rect.move_ip(setting.SIZE[0]-setting.SIZE[0]//1.25,0)
         re_value=[b.mouse_check(mouse,click) for b in self.buttons]
         for b in self.buttons: b.rect.move_ip(-(setting.SIZE[0]-setting.SIZE[0]//1.25),0)
@@ -521,8 +532,11 @@ class SettingMenu(Screen):
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
         self.buttons=[OnOffButton()]
 
-    def button_check(self,mouse,click):
+    def button_check(self,mouse:Hitbox,click:bool):
         for b in self.buttons: b.mouse_check(mouse,click)
+
+    def get_onoff(self):
+        return [b.flag for b in self.buttons]
     
 
     def blit(self,background:pygame.Surface):
@@ -536,15 +550,19 @@ class InGame(Screen):
     def __init__(self):
         super().__init__()
         self.level=Level("tutorial")
-        # self.level_texts=self.level.texts
 
-    def set_level(self,name):
-        self.level=Level(name)
-        # self.level_texts=self.level.texts
+    def set_level(self,name:str):
+        self.level.__init__(name)
 
     def update(self):
         if self.is_screen:
             self.level.update()
+
+    def is_level_finished(self):
+        return self.level.is_level_finished(), self.level.next_level
+    
+    def set_next_level(self):
+        self.level.__init__(self.level.next_level)
 
     
     def collide_check(self,players):
@@ -573,7 +591,7 @@ class PauseScreen(Screen):
         else:
             self.move=flag
 
-    def button_check(self,mouse,click):
+    def button_check(self,mouse:Hitbox,click:bool):
         return [button.mouse_check(mouse,click) for button in self.buttons]
 
     def update(self):
@@ -592,7 +610,7 @@ class PauseScreen(Screen):
             background.blit(self.surface,(0,0))
 
 class Level:
-    def __init__(self,name):
+    def __init__(self,name:str):
         self.name=name
         path="assets/level/"+name+".json"
         try:
@@ -610,11 +628,9 @@ class Level:
         self.pause_tick=0
         self.text=LevelText(data["description"])
         self.next_level=data["next"]
-        self.skip=False
  
     def is_level_finished(self):
-        re_value=all([o.is_finish() for o in self.obs_group]) or self.skip
-        self.skip=False
+        re_value=all([o.is_finish() for o in self.obs_group])
         return re_value
 
     def reset(self):
@@ -638,11 +654,9 @@ class Level:
                 else:
                     for o in self.obs_group: o.update()
                     self.progress+=1
-                    if self.is_level_finished() and self.next_level: self.__init__(self.next_level)
             else:
                 self.pause_tick-=1
         else:
-            if self.is_level_finished() and self.next_level: self.__init__(self.next_level)
             self.text.update()
 
 
@@ -669,7 +683,3 @@ class Level:
         if self.text.is_alive(): self.text.blit(background)
         for obs in self.obs_group:
             obs.blit(background)
-
-
-    def __str__(self):
-        return self.name

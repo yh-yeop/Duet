@@ -1,8 +1,7 @@
 import pygame
 from setting import Setting
 from objects import Objects,Hitbox,Player,PlayerParticle,Intro,Menu,InGame,set_speed,PauseScreen,Vector2
-from util import *
-
+from util import return_image,screen_change,draw_player,return_sound
 
 class Duet(Setting):
     def __init__(self):
@@ -26,15 +25,21 @@ class Duet(Setting):
         self.screens=[self.intro,self.menu,self.in_game]
 
         self.mouse_hitbox=Hitbox(pygame.mouse.get_pos(),pygame.Surface((1,1)))
-
+        
         self.check={"menu":{"main":None,
                             "play":None,
                             "setting":None,
                             "main_screen":None},
                     "pause":None
                             }
+        
+
 
         self.play=True
+        self.player_area=False
+        self.area_surface=pygame.Surface(self.SIZE,pygame.SRCALPHA)
+        for angle in range(360):
+            pygame.draw.circle(self.area_surface,(*self.WHITE,30),Vector2(self.PLAYER_CENTER["ingame"])+Vector2(Player.distance,0).rotate(angle),Player.r)
 
 
     def init_pygame(self):
@@ -60,7 +65,7 @@ class Duet(Setting):
             self.inputs()
             if not self.play:
                 return
-            self.move()
+            self.update()
             self.collide_check()
             self.draw()
     
@@ -125,7 +130,7 @@ class Duet(Setting):
 
                 if True: # 테스트용 기능
                     if event.key==pygame.K_F1:
-                        print("\nF1: 도움말\nF2: 박스 활성화/비활성화\nF3: 무적 활성화/비활성화\nF4: 장애물 페인트 초기화\nF5: 플레이어 위치 초기화\nF6: 테스트 페인트 초기화\nF7: 플레이어 사망\nesc: 인트로 스킵\nM: 음소거 활성화/비활성화\n")
+                        print("\nF1: 도움말\nF2: 박스 활성화/비활성화\nF3: 무적 활성화/비활성화\nF4: 장애물 페인트 초기화\nF5: 플레이어 위치 초기화\nF6: 테스트 페인트 초기화\nF7: 플레이어 사망\nesc: 인트로 스킵\nS: 레벨 스킵\nF8: 플레이어 이동반경 활성화/비활성화")
                     
                     if event.key==pygame.K_F2:
                         Objects.onoff_box()
@@ -156,14 +161,9 @@ class Duet(Setting):
                         for p in self.player:
                             p.die()
 
-                    if event.key==pygame.K_m:
-                        print("음소거: ",end="")
-                        if pygame.mixer.music.get_volume():
-                            print("ON")
-                            pygame.mixer.music.set_volume(0)
-                        else:
-                            print("OFF")
-                            pygame.mixer.music.set_volume(1)
+                    if event.key==pygame.K_F8:
+                        self.player_area=not self.player_area
+                        print(f"플레이어 이동반경 표시: {self.player_area}")
 
                     if event.key==pygame.K_ESCAPE:
                         if self.intro.is_screen:
@@ -173,12 +173,8 @@ class Duet(Setting):
                     if event.key==pygame.K_s:
                         if self.in_game.is_screen:
                             print("레벨 스킵")
-                            self.in_game.level.skip=True
+                            self.in_game.set_next_level()
                 
-
-
-
-
 
 
             if event.type==pygame.KEYUP:
@@ -191,8 +187,8 @@ class Duet(Setting):
             if not self.intro.is_screen:
                 if self.menu.is_screen:
                     self.check["menu"]["main"],self.check["menu"]["play"],self.check["menu"]["setting"]=self.menu.button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
-                    if self.menu.now!=self.SCREEN.MAIN:
-                        collide_pos=pygame.sprite.collide_mask(Hitbox(Vector2(setting.SIZE[0]//1.25,0)+self.menu.pos,self.menu.screens[self.SCREEN.MAIN].surface),self.mouse_hitbox)
+                    if self.menu.now!=self.MENU_SCREEN["MAIN"]:
+                        collide_pos=pygame.sprite.collide_mask(Hitbox(Vector2(self.SIZE[0]//1.25,0)+self.menu.pos,self.menu.screens[self.MENU_SCREEN["MAIN"]].surface),self.mouse_hitbox)
                         self.check["menu"]["main_screen"]=collide_pos,event.type==pygame.MOUSEBUTTONDOWN
                 if self.in_game.is_screen:
                     self.check["pause"]=self.pause_screen.button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
@@ -210,33 +206,31 @@ class Duet(Setting):
         self.in_game.set_level(lv)
         screen_change(self.screens,self.in_game)
         self.menu.direction=0
-        self.menu.now=self.SCREEN.MAIN
-        self.menu.pos=[-setting.SIZE[0]//1.25,0]
+        self.menu.now=self.MENU_SCREEN["MAIN"]
+        self.menu.pos=[-self.SIZE[0]//1.25,0]
 
-    def move(self):
-        print(self.in_game.level)
+    def update(self):
         if not self.pause:
             if not self.rewind_pause:
                 for screen in self.screens: screen.update()
                 if self.check["menu"]["main"]:
-                    if all(self.check["menu"]["main"][self.BUTTON.PLAY]):
+                    if all(self.check["menu"]["main"][self.MAINMENU_BUTTON["PLAY"]]):
                         self.menu.set_direction(-1)
-                    elif all(self.check["menu"]["main"][self.BUTTON.SETTING]):
+                    elif all(self.check["menu"]["main"][self.MAINMENU_BUTTON["SETTING"]]):
                         self.menu.set_direction(1)
                 
                 if self.check["menu"]["main_screen"] and all(self.check["menu"]["main_screen"]):
-                    if self.check["menu"]["main_screen"][0]<self.menu.screens[self.SCREEN.MAIN].surface.get_size()[0]//2: self.menu.set_direction(-1)
+                    if self.check["menu"]["main_screen"][0][0]<self.menu.screens[self.MENU_SCREEN["MAIN"]].surface.get_size()[0]//2: self.menu.set_direction(-1)
                     else: self.menu.set_direction(1)
                 
 
                 if self.check["menu"]["play"]:
                     if all(self.check["menu"]["play"][0]):
                         self.set_level("tutorial")
-                        print("Tutorial")
                     elif all(self.check["menu"]["play"][1]):
-                        print("test_lv_4")
                         self.set_level("test_level_4")
-
+                bgm=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["BGM"]]
+                if pygame.mixer.music.get_volume()!=int(bgm): pygame.mixer.music.set_volume(int(bgm))
 
 
                 if self.intro.is_intro_done():
@@ -257,17 +251,29 @@ class Duet(Setting):
                             p.distance=Player.distance
                             p.speed=2
 
+                finished=self.in_game.is_level_finished()
+                reset_angle=self.player.sprites()[0].angle if min(tuple(map(lambda p: p.rect.x,self.player.sprites())))==self.player.sprites()[0].rect.x else self.player.sprites()[1].angle
+                
                 if self.menu.is_screen:
                     self.direction=1
                 elif self.in_game.level.rewind:
                     self.direction=0
+                elif all(finished):
+                    self.in_game.set_next_level()
+                    Player.set_player_reset(-1 if 270>reset_angle>90 else 1)
+                if Player.reset_direction:
+                    for p in self.player:
+                        if p.angle in (0,180):
+                            Player.set_player_reset(0)
+                            break
+                    
 
                 self.player.update(self.direction)
 
                 rewind_angle=self.player.sprites()[0].angle if min(tuple(map(lambda p: p.rect.x,self.player.sprites())))==self.player.sprites()[0].rect.x else self.player.sprites()[1].angle
                 Player.set_rewind_angle(rewind_angle)
                 
-                if self.in_game.level.is_level_finished():
+                if finished[0] and not finished[1]:
                     self.in_game.level.reset()
                     for p in self.player: p.reset_particle()
                     screen_change(self.screens,self.menu)
@@ -320,14 +326,13 @@ class Duet(Setting):
         self.background.fill(self.BLACK)
 
 
-
         if self.in_game.is_screen:
             self.in_game.fill()
             draw_player(self.player,self.in_game.surface,"ingame")
             self.in_game.blit(self.background)
 
         else:
-            self.menu.screens[self.SCREEN.MAIN].fill()
+            self.menu.screens[self.MENU_SCREEN["MAIN"]].fill()
             draw_player(self.player,self.menu.screens[1].surface,"menu")
             self.menu.blit(self.background)
 
@@ -336,6 +341,8 @@ class Duet(Setting):
         if self.pause:
             self.pause_screen.blit(self.background)
 
+        if self.player_area:
+                self.background.blit(self.area_surface,(0,0))
 
         # for o in self.in_game.level.obs_group:
         #     if o.collide_pos!=[]:
