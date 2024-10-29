@@ -42,6 +42,10 @@ class Duet(Setting):
             pygame.draw.circle(self.area_surface,(*self.WHITE,30),Vector2(self.PLAYER_CENTER["ingame"])+Vector2(Player.distance,0).rotate(angle),Player.r)
 
 
+        self.sounds={"death":return_sound("death.mp3"),
+                     "rewind":return_sound("rewind.mp3")}
+
+
     def init_pygame(self):
         pygame.init()
         self.background=pygame.display.set_mode(self.SIZE)
@@ -82,6 +86,7 @@ class Duet(Setting):
                 if self.time_count["rewind"]<=0:
                     self.rewind_pause=False
                     for p in self.player: p.set_rewind_speed()
+                    self.sounds["rewind"].play()
                     self.in_game.level.rewind_change()
         if not self.intro.is_screen:
             self.mouse_hitbox.update(pygame.mouse.get_pos())
@@ -310,6 +315,7 @@ class Duet(Setting):
         if (not self.pause and not self.rewind_pause) and self.in_game.is_screen:
             check=self.in_game.collide_check(self.player.sprites())
             if check:
+                self.sounds["death"].play()
                 if isinstance(check,list):
                     for row in check:
                         self.player.sprites()[row[1]].die()

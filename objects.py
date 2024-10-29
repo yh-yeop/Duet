@@ -237,7 +237,7 @@ class Obstacle(Objects):
                     if self.angle<0:
                         rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(abs(self.angle)))))).rotate(-self.angle)
                     elif self.angle>90: # 고쳐야함
-                        rotate_pos=(Vector2(row[0])-Vector2(0,(self.w*math.sin(math.radians(abs((self.angle%90)-90)))))).rotate(self.angle%90)
+                        rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(abs(self.angle%180-180)))))).rotate(-(self.angle%180))
                     else:
                         rotate_pos=(Vector2(row[0])-Vector2((self.h*math.sin(math.radians(self.angle))),0)).rotate(-self.angle)
                     self.backup_image.blit(paint,rotate_pos-Vector2(paint.get_size())//2)
