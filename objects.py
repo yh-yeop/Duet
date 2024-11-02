@@ -222,7 +222,8 @@ class Obstacle(Objects):
             self.image=self.backup_image
 
     def collide_check(self,players:list):
-        if self.invincible or -400>Vector2(*self.rect.center).distance_to(setting.PLAYER_CENTER["ingame"]) and Vector2(*self.rect.center).distance_to(setting.PLAYER_CENTER["ingame"]) >600:
+        #  
+        if any((self.invincible, -400>Vector2(*self.rect.center).distance_to(setting.PLAYER_CENTER["ingame"]), Vector2(*self.rect.center).distance_to(setting.PLAYER_CENTER["ingame"])>600)):
             re_value=[]
             return re_value
         else:
@@ -235,7 +236,7 @@ class Obstacle(Objects):
 
                 if self.angle%90:
                     if self.angle<0:
-                        rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(abs(self.angle)))))).rotate(-self.angle)
+                        rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(abs(self.angle%90)))))).rotate(-self.angle)
                     elif self.angle>90: # 고쳐야함
                         rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(abs(self.angle%180-180)))))).rotate(-(self.angle%180))
                     else:
@@ -566,7 +567,7 @@ class InGame(Screen):
 
     
     def collide_check(self,players):
-        return self.level.collide_check(players) if self.is_screen else False
+        return self.is_screen and self.level.collide_check(players)
 
     def fill(self):
         self.surface.fill(setting.BLACK)
@@ -595,6 +596,7 @@ class PauseScreen(Screen):
         return [button.mouse_check(mouse,click) for button in self.buttons]
 
     def update(self):
+        print(self.move)
         if self.move:
             self.buttons[0].rect.x=max(Vector2(self.buttons[0].rect.x-5,setting.SIZE[0]-20-self.button_size))
             self.buttons[1].rect.x=min(Vector2(self.buttons[0].rect.x+5,20))
