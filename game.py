@@ -233,7 +233,7 @@ class Duet(Setting):
                     if all(self.check["menu"]["play"][0]):
                         self.set_level("tutorial")
                     elif all(self.check["menu"]["play"][1]):
-                        self.set_level("test_level_4")
+                        self.set_level("test_level_1")
                 bgm=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["BGM"]]
                 if pygame.mixer.music.get_volume()!=int(bgm): pygame.mixer.music.set_volume(int(bgm))
 
@@ -349,13 +349,6 @@ class Duet(Setting):
 
         if self.player_area:
                 self.background.blit(self.area_surface,(0,0))
-
-        # for o in self.in_game.level.obs_group:
-        #     if o.collide_pos!=[]:
-        #         paint=pygame.Surface((20,20),pygame.SRCALPHA)
-        #         paint.fill((66,255,37,50))
-        #         for angle,pos in o.collide_pos:
-        #             self.background.blit(paint,pos)
         
         pygame.display.flip()   
 
