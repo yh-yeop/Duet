@@ -14,7 +14,8 @@ class Setting:
         self.MAINMENU_BUTTON={"SETTING":0,
                               "PLAY":1}
         
-        self.SETTINGMENU_BUTTON={"BGM":0}
+        self.SETTINGMENU_BUTTON={"BGM":0,
+                                 "SFX":1}
 
         self.MENU_SCREEN={"SETTING":0,
                           "MAIN":1,

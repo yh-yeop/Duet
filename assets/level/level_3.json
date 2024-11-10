@@ -1,8 +1,8 @@
 {
     "speed":1.0,
-    "name":"테스트-1",
-    "description":"집중하세요.",
-    "rotate":10,
+    "name":"레벨-3",
+    "description":"마지막 관문.",
+    "rotate":null,
     "next":null,
     "obstacles": [
         {
@@ -10,13 +10,14 @@
             "dx": 1,
             "dy": 2,
             "x": 150,
-            "y": 0,
+            "y": -100,
             "w": 200,
-            "h": 100,
-            "angle": 120,
+            "h": 30,
+            "angle": 300,
             "angle_plus": null,
             "dx_plus": null,
-            "dy_plus": null
+            "dy_plus": null,
+            "alpha_plus":null
         }
     ]
 }

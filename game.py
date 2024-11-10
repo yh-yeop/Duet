@@ -53,7 +53,6 @@ class Duet(Setting):
         icon=return_image("icon.jpg")
         pygame.display.set_icon(icon)
         self.set_bgm("Theme_from_Duet")
-        
 
     def set_bgm(self,name):
         path="assets/sound/bgm/"
@@ -135,13 +134,13 @@ class Duet(Setting):
 
                 if True: # 테스트용 기능
                     if event.key==pygame.K_F1:
-                        print("\nF1: 도움말\nF2: 박스 활성화/비활성화\nF3: 무적 활성화/비활성화\nF4: 장애물 페인트 초기화\nF5: 플레이어 위치 초기화\nF6: 테스트 페인트 초기화\nF7: 플레이어 사망\nesc: 인트로 스킵\nS: 레벨 스킵\nF8: 플레이어 이동반경 활성화/비활성화")
+                        print("\nF1: 도움말\nF2: 박스 활성화/비활성화\nF6: 무적 활성화/비활성화\nF4: 장애물 페인트 초기화\nF5: 플레이어 위치 초기화\nF7: 플레이어 사망\nesc: 인트로 스킵\nS: 레벨 스킵\nF8: 플레이어 이동반경 활성화/비활성화")
                     
                     if event.key==pygame.K_F2:
                         Objects.onoff_box()
                         print(f"박스: {Objects.box}")
                     
-                    if event.key==pygame.K_F3:
+                    if event.key==pygame.K_F6:
                         for o in self.in_game.level.obs_group:
                             o.update_invincible()
                         print(f"무적: {self.in_game.level.obs_group.sprites()[0].invincible}")
@@ -155,11 +154,6 @@ class Duet(Setting):
                         print("플레이어 위치 초기화")
                         self.player.sprites()[0].angle=180
                         self.player.sprites()[1].angle=0
-
-                    if event.key==pygame.K_F6:
-                        print("테스트 페인트 초기화")
-                        for o in self.in_game.level.obs_group:
-                            o.reset2()
 
                     if event.key==pygame.K_F7:
                         print("플레이어 사망")
@@ -207,6 +201,7 @@ class Duet(Setting):
         for p in self.player:
             p.speed=2.4
             p.reset_particle()
+            p.set_rewind_speed()
         PlayerParticle.set_dy(0.9)
         self.in_game.set_level(lv)
         screen_change(self.screens,self.in_game)
@@ -233,9 +228,16 @@ class Duet(Setting):
                     if all(self.check["menu"]["play"][0]):
                         self.set_level("tutorial")
                     elif all(self.check["menu"]["play"][1]):
-                        self.set_level("test_level_1")
+                        self.set_level("level_2")
+                    elif all(self.check["menu"]["play"][2]):
+                        self.set_level("level_3")
                 bgm=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["BGM"]]
-                if pygame.mixer.music.get_volume()!=int(bgm): pygame.mixer.music.set_volume(int(bgm))
+                sfx=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["SFX"]]
+                if pygame.mixer.music.get_volume()!=int(bgm):
+                    pygame.mixer.music.set_volume(int(bgm))
+                if self.sounds["death"].get_volume()!=int(sfx):
+                    for k in self.sounds:
+                        self.sounds[k].set_volume(int(sfx))
 
 
                 if self.intro.is_intro_done():

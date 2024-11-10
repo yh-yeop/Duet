@@ -168,7 +168,8 @@ class DeathParticle(Particle):
 class Obstacle(Objects):
     def __init__(self,*args):
         shape,self.dx,self.dy,self.x,self.y,self.w,self.h,\
-            self.angle,self.angle_plus,self.dx_plus,self.dy_plus=args
+            self.angle,self.angle_plus,self.dx_plus,self.dy_plus,self.alpha_plus=args
+        self.angle%=360
         self.backup_angle=self.angle
         image=pygame.Surface((self.w,self.h),pygame.SRCALPHA)
         image.fill(setting.WHITE)
@@ -202,7 +203,7 @@ class Obstacle(Objects):
         self.pos[0]+=self.dx*speed*FRAME_SPEED
         self.pos[1]+=self.dy*speed*FRAME_SPEED
         self.rect.center=self.pos
-        if not self.invincible: # 반대 벽에서 나오는거
+        if not self.invincible:
             if self.dx>0 and self.rect.right>setting.SIZE[0]:
                 self.extra_image_direction=1
                 self.pos+=Vector2(-setting.SIZE[0],0)
@@ -222,7 +223,6 @@ class Obstacle(Objects):
             self.image=self.backup_image
 
     def collide_check(self,players:list):
-        #  
         if any((self.invincible, -400>Vector2(*self.rect.center).distance_to(setting.PLAYER_CENTER["ingame"]), Vector2(*self.rect.center).distance_to(setting.PLAYER_CENTER["ingame"])>600)):
             re_value=[]
             return re_value
@@ -235,20 +235,22 @@ class Obstacle(Objects):
                 paint=pygame.transform.rotozoom(paint,np.random.randint(360),0.07)
 
                 if self.angle%90:
-                    if self.angle<0:
-                        rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(abs(self.angle%90)))))).rotate(-self.angle)
-                    elif self.angle>90: # 고쳐야함
-                        rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.sin(math.radians(abs(self.angle%180-180)))))).rotate(-(self.angle%180))
+                    if self.angle>270:
+                        rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.cos(math.radians(self.angle%90))))).rotate(-self.angle)
+                    elif self.angle>180:
+                        rotate_pos=(Vector2(row[0])-Vector2((self.w*math.cos(math.radians(self.angle%90))),self.image.get_size()[1])).rotate(-self.angle)
+                    elif self.angle>90:
+                        rotate_pos=(Vector2(row[0])-Vector2(self.image.get_size()[0],self.h*math.sin(math.radians(self.angle%90)))).rotate(-self.angle)
                     else:
                         rotate_pos=(Vector2(row[0])-Vector2((self.h*math.sin(math.radians(self.angle))),0)).rotate(-self.angle)
                     self.backup_image.blit(paint,rotate_pos-Vector2(paint.get_size())//2)
 
                     
                     self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
-                    
+                    print(rotate_pos-Vector2(paint.get_size())//2+Vector2(self.rect.topleft),self.angle)
                 
                 else:
-                    self.backup_image.blit(paint,Vector2(*row[0])-Vector2(paint.get_size())//2)
+                    self.backup_image.blit(paint,Vector2(row[0])-Vector2(paint.get_size())//2)
         return re_value
     
     def blit(self,background:pygame.Surface):
@@ -284,7 +286,7 @@ class MenuButton(Button):
 
 
 class OnOffButton:
-    def __init__(self,text="Test",flag=True,pos=Vector2(0,200)):
+    def __init__(self,text="Test",flag=False,pos=Vector2(0,200)):
         self.image=pygame.Surface((setting.SIZE[0]//1.25,50))
         self.image.fill(setting.WHITE)
         self.image.blit(return_text(return_font(30,setting.KOR_FONT,isfile=True),text,color=setting.BLACK),(20,0))
@@ -494,12 +496,13 @@ class MainMenu(Screen):
 class PlayMenu(Screen):
     def __init__(self):
         super().__init__((setting.SIZE[0]//1.25,setting.SIZE[1]))
-        self.buttons=[Button(return_image("test_level.png",(60,60)),(Vector2(*self.surface.get_size())//2)-Vector2(60,0)),
-                      Button(return_image(size=(60,60)),(Vector2(*self.surface.get_size())//2)+Vector2(30,0))
+        self.buttons=[Button(return_image("lv_1.png",(60,60)),Vector2(self.surface.get_size()[0]//2-90,self.surface.get_size()[1]//5)),
+                      Button(return_image("lv_2.png",(60,60)),Vector2(self.surface.get_size()[0]//2-10,self.surface.get_size()[1]//5)),
+                      Button(return_image("lv_3.png",(60,60)),Vector2(self.surface.get_size()[0]//2+70,self.surface.get_size()[1]//5))
                       ]
         
         self.texts=[
-            (return_text(return_font(25),"플레이",color=setting.WHITE),Vector2(self.surface.get_size()[0]//2,10))
+            (return_text(return_font(30,setting.KOR_FONT,isfile=True),"플레이",color=setting.WHITE),Vector2(self.surface.get_size()[0]//2,10))
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 
@@ -531,7 +534,8 @@ class SettingMenu(Screen):
             (return_text(return_font(30),"설정",color=setting.BLACK),Vector2(self.surface.get_size()[0]//2,10))
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
-        self.buttons=[OnOffButton("배경 음악")]
+        self.buttons=[OnOffButton("배경 음악"),
+                      OnOffButton("효과음",pos=Vector2(0,260))]
 
     def button_check(self,mouse:Hitbox,click:bool):
         for b in self.buttons: b.mouse_check(mouse,click)
@@ -596,7 +600,6 @@ class PauseScreen(Screen):
         return [button.mouse_check(mouse,click) for button in self.buttons]
 
     def update(self):
-        print(self.move)
         if self.move:
             self.buttons[0].rect.x=max(Vector2(self.buttons[0].rect.x-5,setting.SIZE[0]-20-self.button_size))
             self.buttons[1].rect.x=min(Vector2(self.buttons[0].rect.x+5,20))

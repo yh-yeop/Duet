@@ -2,7 +2,7 @@
     "speed":1.0,
     "name":"튜토리얼-5",
     "description":"당신의 직감을 믿으세요.",
-    "rotate":10,
+    "rotate":null,
     "next":null,
     "obstacles": [
         {
@@ -16,7 +16,8 @@
             "angle": -15,
             "angle_plus": null,
             "dx_plus": null,
-            "dy_plus": null
+            "dy_plus": null,
+            "alpha_plus":null
         },
         {
             "shape": "rect",
@@ -29,7 +30,8 @@
             "angle": 15,
             "angle_plus": null,
             "dx_plus": null,
-            "dy_plus": null
+            "dy_plus": null,
+            "alpha_plus":null
         },
         {
             "shape": "rect",
@@ -42,7 +44,8 @@
             "angle": -15,
             "angle_plus": null,
             "dx_plus": null,
-            "dy_plus": null
+            "dy_plus": null,
+            "alpha_plus":null
         },
         {
             "shape": "rect",
@@ -55,7 +58,8 @@
             "angle": -15,
             "angle_plus": null,
             "dx_plus": null,
-            "dy_plus": null
+            "dy_plus": null,
+            "alpha_plus":null
         },
         {
             "shape": "rect",
@@ -68,7 +72,8 @@
             "angle": 30,
             "angle_plus": null,
             "dx_plus": null,
-            "dy_plus": null
+            "dy_plus": null,
+            "alpha_plus":null
         },
         {
             "shape": "rect",
@@ -81,7 +86,8 @@
             "angle": -30,
             "angle_plus": null,
             "dx_plus": null,
-            "dy_plus": null
+            "dy_plus": null,
+            "alpha_plus":null
         }
     ]
 }
