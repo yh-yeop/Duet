@@ -198,6 +198,8 @@ class Duet(Setting):
         self.direction=0
         self.player.sprites()[0].angle=180
         self.player.sprites()[1].angle=0
+        Player.set_rewind_angle(180)
+        Player.set_player_center(1)
         for p in self.player:
             p.speed=2.4
             p.reset_particle()
@@ -210,6 +212,7 @@ class Duet(Setting):
         self.menu.pos=[-self.SIZE[0]//1.25,0]
 
     def update(self):
+        self.pause_screen.update()
         if not self.pause:
             if not self.rewind_pause:
                 for screen in self.screens: screen.update()
@@ -228,9 +231,10 @@ class Duet(Setting):
                     if all(self.check["menu"]["play"][0]):
                         self.set_level("tutorial")
                     elif all(self.check["menu"]["play"][1]):
-                        self.set_level("level_2")
-                    elif all(self.check["menu"]["play"][2]):
-                        self.set_level("level_3")
+                        self.set_level("level2")
+                    # elif all(self.check["menu"]["play"][2]):
+                    #     self.set_level("level3")
+
                 bgm=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["BGM"]]
                 sfx=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["SFX"]]
                 if pygame.mixer.music.get_volume()!=int(bgm):
@@ -274,7 +278,7 @@ class Duet(Setting):
                             Player.set_player_reset(0)
                             break
                     
-
+                Player.player_center_update()
                 self.player.update(self.direction)
 
                 rewind_angle=self.player.sprites()[0].angle if min(tuple(map(lambda p: p.rect.x,self.player.sprites())))==self.player.sprites()[0].rect.x else self.player.sprites()[1].angle
@@ -284,6 +288,7 @@ class Duet(Setting):
                     self.in_game.level.reset()
                     for p in self.player: p.reset_particle()
                     screen_change(self.screens,self.menu)
+                    Player.set_player_center(-1)
                     for p in self.player:
                         p.speed=2
                     for p in self.player: p.set_rewind_speed()
@@ -294,7 +299,8 @@ class Duet(Setting):
             else:
                 self.player.update(0)
         else:
-            self.pause_screen.update()
+            if PauseScreen.level_name!=self.in_game.level.name:
+                PauseScreen.set_level_name(self.in_game.level.name)
             if self.check["pause"]:
                 if all(self.check["pause"][0]):
                     self.direction=0
@@ -304,12 +310,14 @@ class Duet(Setting):
 
                 if all(self.check["pause"][1]):
                     screen_change(self.screens,self.menu)
+                    Player.set_player_center(-1)
                     for p in self.player:
                         p.speed=2
                         p.reset_particle()
                         p.set_rewind_speed()
                     PlayerParticle.set_dy(0)
                     self.pause=False
+                    self.pause_screen.screen_onoff(False)
                     print(f"메뉴로 돌아옴\n일시정지: {self.pause}")
 
 
@@ -336,18 +344,17 @@ class Duet(Setting):
 
         if self.in_game.is_screen:
             self.in_game.fill()
-            draw_player(self.player,self.in_game.surface,"ingame")
+            draw_player(self.player,self.in_game.surface,Player.get_center())
             self.in_game.blit(self.background)
 
         else:
             self.menu.screens[self.MENU_SCREEN["MAIN"]].fill()
-            draw_player(self.player,self.menu.screens[1].surface,"menu")
+            draw_player(self.player,self.menu.screens[1].surface,Player.get_center())
             self.menu.blit(self.background)
 
         self.intro.blit(self.background)
-
-        if self.pause:
-            self.pause_screen.blit(self.background)
+        
+        self.pause_screen.blit(self.background)
 
         if self.player_area:
                 self.background.blit(self.area_surface,(0,0))

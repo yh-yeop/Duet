@@ -4,7 +4,7 @@ setting=Setting()
 
 
 def return_sound(name:str):
-    name="assets/sound/"+name
+    name="assets/sound/sfx/"+name
     try:
         return pygame.mixer.Sound(name)
     except FileNotFoundError:
@@ -41,14 +41,12 @@ def draw_player_circle(background:pygame.Surface,r=setting.CENTER[0]//5*2,alpha=
     pygame.draw.circle(circle_surface,(200,200,200,alpha),center,r,1)
     background.blit(circle_surface,(0,0))
 
-def draw_player(player,background,screen):
-    pos=setting.PLAYER_CENTER[screen]
-    draw_player_circle(background,center=pos)
+def draw_player(player:pygame.sprite.Group,background,center):
+    draw_player_circle(background,center=center)
     for p in player:
-        # p.change_center(screen)
-        p.center=pos
+        p.set_center(center)
         p.blit(background)
 
-def screen_change(screens,screen):
+def screen_change(screens:list,screen):
     for s in screens: s.is_screen=False
     screens[screens.index(screen)].is_screen=True

@@ -30,8 +30,9 @@ class Player(Objects):
     r=12
     distance=setting.CENTER[0]//5*2
     rewind_angle=0
-    center=setting.PLAYER_CENTER["menu"]
+    center=Vector2(setting.PLAYER_CENTER["menu"])
     reset_direction=0
+    dy=0
     def __init__(self,color:tuple,center:tuple,direction:str):
         self.center=Vector2(center)
         self.angle=180 if direction=="left" else 0
@@ -48,9 +49,20 @@ class Player(Objects):
         self.death_particle_group=pygame.sprite.Group()
 
     @classmethod
+    def get_center(cls):
+        return cls.center
+    
+    @classmethod
+    def set_player_center(cls,direction:int):
+        cls.dy=direction*3
+
+    @classmethod
+    def player_center_update(cls):
+        cls.center[1]=max(min(cls.center[1]+cls.dy,setting.PLAYER_CENTER["ingame"][1]),setting.PLAYER_CENTER["menu"][1])
+
+    @classmethod
     def set_player_reset(cls,direction:int):
         cls.reset_direction=direction
-
 
     @classmethod
     def set_rewind_angle(cls,angle:int):
@@ -60,9 +72,8 @@ class Player(Objects):
         self.rewind[1]=setting.FRAME*0.8
         self.rewind[0]=(540-Player.rewind_angle)/self.rewind[1]
 
-    def change_center(self,screen:str):
-        func=min if screen=="ingame" else max
-        self.center[1]=func(setting.PLAYER_CENTER["ingame"][1]-setting.PLAYER_CENTER["menu"][1]/(setting.FRAME),setting.PLAYER_CENTER[screen][1])
+    def set_center(self,pos:Vector2):
+        self.center=pos
         
     def reset_particle(self):
         self.particle_group=pygame.sprite.Group()
@@ -169,6 +180,8 @@ class Obstacle(Objects):
     def __init__(self,*args):
         shape,self.dx,self.dy,self.x,self.y,self.w,self.h,\
             self.angle,self.angle_plus,self.dx_plus,self.dy_plus,self.alpha_plus=args
+        if self.alpha_plus: self.alpha_plus=list(self.alpha_plus)
+        self.alpha=255
         self.angle%=360
         self.backup_angle=self.angle
         image=pygame.Surface((self.w,self.h),pygame.SRCALPHA)
@@ -212,7 +225,6 @@ class Obstacle(Objects):
                 self.extra_image_direction=-1
                 self.pos+=Vector2(setting.SIZE[0],0)
                 self.rect.move_ip(setting.SIZE[0],0)
-            
         if self.angle_plus:
             self.angle=(self.angle+self.angle_plus*speed*FRAME_SPEED)%360
         if self.angle:
@@ -221,6 +233,8 @@ class Obstacle(Objects):
             self.mask=pygame.mask.from_surface(self.image)
         else:
             self.image=self.backup_image
+        if self.alpha_plus and self.pos[1]>self.alpha_plus[0]:
+            self.alpha=max(min(255,self.alpha+self.alpha_plus[1]*speed*FRAME_SPEED),0)
 
     def collide_check(self,players:list):
         if any((self.invincible, -400>Vector2(*self.rect.center).distance_to(setting.PLAYER_CENTER["ingame"]), Vector2(*self.rect.center).distance_to(setting.PLAYER_CENTER["ingame"])>600)):
@@ -230,6 +244,7 @@ class Obstacle(Objects):
             re_value=[(pygame.sprite.collide_mask(self,players[i]),i) for i in range(2)]
         for row in re_value:
             if row[0]:
+                self.alpha=255
                 color="red" if players[row[1]].color==setting.RED else "blue"
                 paint=return_image("paint/"+color+"/"+str(np.random.randint(9))+".png")
                 paint=pygame.transform.rotozoom(paint,np.random.randint(360),0.07)
@@ -247,13 +262,13 @@ class Obstacle(Objects):
 
                     
                     self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
-                    print(rotate_pos-Vector2(paint.get_size())//2+Vector2(self.rect.topleft),self.angle)
                 
                 else:
                     self.backup_image.blit(paint,Vector2(row[0])-Vector2(paint.get_size())//2)
         return re_value
     
     def blit(self,background:pygame.Surface):
+        self.image.set_alpha(self.alpha)
         background.blit(self.image,self.rect)
         if self.extra_image_direction: background.blit(self.image,Vector2(self.rect.topleft)+Vector2(self.extra_image_direction*setting.SIZE[0],0))
         if Objects.box:
@@ -496,10 +511,13 @@ class MainMenu(Screen):
 class PlayMenu(Screen):
     def __init__(self):
         super().__init__((setting.SIZE[0]//1.25,setting.SIZE[1]))
-        self.buttons=[Button(return_image("lv_1.png",(60,60)),Vector2(self.surface.get_size()[0]//2-90,self.surface.get_size()[1]//5)),
-                      Button(return_image("lv_2.png",(60,60)),Vector2(self.surface.get_size()[0]//2-10,self.surface.get_size()[1]//5)),
-                      Button(return_image("lv_3.png",(60,60)),Vector2(self.surface.get_size()[0]//2+70,self.surface.get_size()[1]//5))
+        self.buttons=[Button(return_image("lv_1.png",(60,60)),Vector2(self.surface.get_size()[0]//2,self.surface.get_size()[1]//5)),
+                      Button(return_image("lv_2.png",(60,60)),Vector2(self.surface.get_size()[0]//2,self.surface.get_size()[1]//5*2)),
+                      Button(return_image("lv_3.png",(60,60)),Vector2(self.surface.get_size()[0]//2,self.surface.get_size()[1]//5*3))
                       ]
+        for b in self.buttons: b.rect.move_ip(-b.image.get_size()[0]//2,0)
+        self.buttons[2].alpha=170
+        self.buttons[2].image.blit(return_image("locked.png",(60,60)),(0,0))
         
         self.texts=[
             (return_text(return_font(30,setting.KOR_FONT,isfile=True),"플레이",color=setting.WHITE),Vector2(self.surface.get_size()[0]//2,10))
@@ -508,7 +526,7 @@ class PlayMenu(Screen):
 
     def button_check(self,mouse:Hitbox,click:bool):
         for b in self.buttons: b.rect.move_ip(setting.SIZE[0]-setting.SIZE[0]//1.25,0)
-        re_value=[b.mouse_check(mouse,click) for b in self.buttons]
+        re_value=[b.mouse_check(mouse,click) for b in self.buttons[:2]]
         for b in self.buttons: b.rect.move_ip(-(setting.SIZE[0]-setting.SIZE[0]//1.25),0)
         
         return re_value
@@ -582,13 +600,20 @@ class InGame(Screen):
             background.blit(self.surface,(0,0))
 
 class PauseScreen(Screen):
+    level_name=""
     def __init__(self):
         super().__init__()
         self.button_size=60
-        self.buttons=[Button(return_image("play.png",(self.button_size,self.button_size)),Vector2(20-100,setting.SIZE[1]-80)),
-                      Button(return_image("exit.png",(self.button_size,self.button_size)),Vector2(setting.SIZE[0]-20-self.button_size-100,setting.SIZE[1]-80))]
+        self.buttons=[Button(return_image("play.png",(self.button_size,self.button_size)),Vector2(setting.SIZE[0],setting.SIZE[1]-20-self.button_size)),
+                      Button(return_image("exit.png",(self.button_size,self.button_size)),Vector2(-60,setting.SIZE[1]-20-self.button_size))]
+        self.text=[return_text(return_font(30,setting.KOR_FONT,isfile=True),"TEST"),Vector2(setting.CENTER[0],-70),PauseScreen.level_name]
+        self.text[1][0]-=self.text[0].get_size()[0]//2
         self.move=False
         self.is_screen=True
+
+    @classmethod
+    def set_level_name(cls,name):
+        cls.level_name=name
 
     def screen_onoff(self,flag=None):
         if flag==None:
@@ -600,23 +625,31 @@ class PauseScreen(Screen):
         return [button.mouse_check(mouse,click) for button in self.buttons]
 
     def update(self):
+        if PauseScreen.level_name!=self.text[2]:
+            self.text[1][0]+=self.text[0].get_size()[0]//2
+            self.text[2]=PauseScreen.level_name
+            self.text[0]=return_text(return_font(30,setting.KOR_FONT,isfile=True),self.text[2])
+            self.text[1][0]-=self.text[0].get_size()[0]//2
+
         if self.move:
-            self.buttons[0].rect.x=max(Vector2(self.buttons[0].rect.x-5,setting.SIZE[0]-20-self.button_size))
-            self.buttons[1].rect.x=min(Vector2(self.buttons[0].rect.x+5,20))
+            self.buttons[0].rect.x=max(self.buttons[0].rect.x-5,setting.SIZE[0]-20-self.button_size)
+            self.buttons[1].rect.x=min(self.buttons[1].rect.x+5,20)
+            self.text[1][1]=min(self.text[1][1]+5,10)
         else:
-            self.buttons[0].rect.x=min(Vector2(self.buttons[0].rect.x+5,20-100))
-            self.buttons[1].rect.x=max(Vector2(self.buttons[0].rect.x-5,setting.SIZE[0]-20-self.button_size-100))
+            self.buttons[0].rect.x=min(self.buttons[0].rect.x+5,setting.SIZE[0])
+            self.buttons[1].rect.x=max(self.buttons[1].rect.x-5,-60)
+            self.text[1][1]=max(self.text[1][1]-5,-70)
 
     def blit(self,background:pygame.Surface):
         if self.is_screen:
             self.surface.fill((0,0,0,0))
+            self.surface.blit(self.text[0],self.text[1])
             for b in self.buttons: self.surface.blit(b.image,b.rect)
 
             background.blit(self.surface,(0,0))
 
 class Level:
     def __init__(self,name:str):
-        self.name=name
         path="assets/level/"+name+".json"
         try:
             with open(path, encoding="utf-8") as json_file:data=json.load(json_file)
@@ -626,12 +659,13 @@ class Level:
             except FileNotFoundError:
                 with open("./../Duet/"+path,encoding="utf-8") as json_file:data=json.load(json_file)
                  
+        self.name=data["name"]
         data_list=[[0 if v==None else v for v in obs.values()] for obs in data["obstacles"]]
         self.obs_group=pygame.sprite.Group(*[Obstacle(*i) for i in data_list])
         self.rewind=False
         self.progress=0
         self.pause_tick=0
-        self.text=LevelText(data["description"])
+        self.text=LevelText(data["description"]) if data["description"] else False
         self.next_level=data["next"]
  
     def is_level_finished(self):
@@ -644,7 +678,7 @@ class Level:
             o.reset()
 
     def update(self):
-        if not self.text.is_alive():
+        if not self.text or not self.text.is_alive():
             if not self.pause_tick:
                 if self.rewind:
                     for o in self.obs_group: o.update(-self.progress/(setting.FRAME*0.8))
@@ -685,6 +719,6 @@ class Level:
         return re_value if len(re_value)!=1 else re_value[0]
 
     def blit(self,background:pygame.Surface):
-        if self.text.is_alive(): self.text.blit(background)
+        if self.text and self.text.is_alive(): self.text.blit(background)
         for obs in self.obs_group:
             obs.blit(background)
