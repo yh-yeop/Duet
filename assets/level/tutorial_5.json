@@ -1,7 +1,7 @@
 {
     "speed":1.0,
     "name":"튜토리얼-5",
-    "description":"당신의 직감을 믿으세요.",
+    "description":"이제 마지막 연습이에요.",
     "rotate":null,
     "next":null,
     "obstacles": [
@@ -35,7 +35,7 @@
         },
         {
             "shape": "rect",
-            "dx": 1.2,
+            "dx": 1.4,
             "dy": 2,
             "x": -80,
             "y": -690,

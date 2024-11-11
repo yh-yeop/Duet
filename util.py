@@ -42,7 +42,7 @@ def draw_player_circle(background:pygame.Surface,r=setting.CENTER[0]//5*2,alpha=
     background.blit(circle_surface,(0,0))
 
 def draw_player(player:pygame.sprite.Group,background,center):
-    draw_player_circle(background,center=center)
+    draw_player_circle(background,player.sprites()[0].distance,center=center)
     for p in player:
         p.set_center(center)
         p.blit(background)

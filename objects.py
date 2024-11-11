@@ -38,6 +38,7 @@ class Player(Objects):
         self.angle=180 if direction=="left" else 0
         self.image=pygame.Surface((1,1),pygame.SRCALPHA)
         pygame.draw.rect(self.image,setting.WHITE,(0,0,*self.image.get_size()),1)
+        self.distance=Player.distance
         pos=self.center+Vector2(self.distance,0).rotate(self.angle)
         super().__init__(pos,self.image,self.angle)
         
@@ -61,12 +62,15 @@ class Player(Objects):
         cls.center[1]=max(min(cls.center[1]+cls.dy,setting.PLAYER_CENTER["ingame"][1]),setting.PLAYER_CENTER["menu"][1])
 
     @classmethod
-    def set_player_reset(cls,direction:int):
+    def set_reset_angle(cls,direction:int):
         cls.reset_direction=direction
 
     @classmethod
     def set_rewind_angle(cls,angle:int):
         cls.rewind_angle=angle
+
+    def reset_death(self):
+        self.death_tick=0
 
     def set_rewind_speed(self):
         self.rewind[1]=setting.FRAME*0.8
@@ -391,7 +395,38 @@ class Intro(Screen):
             pygame.draw.circle(self.surface,setting.WHITE,setting.PLAYER_CENTER["menu"],self.r)
             for text in self.texts: self.surface.blit(*text)
             background.blit(self.surface,(0,0))
+
+class ClearScreen(Screen):
+    def __init__(self):
+        super().__init__()
+        self.r=Player.r
+        self.w=self.r
+        self.wait_tick=setting.FRAME*3
+        self.alpha=128
     
+    def update(self):
+        if self.is_screen:
+            if self.wait_tick:
+                self.wait_tick-=1
+                self.alpha=min(self.alpha+0.5,220)
+            else:
+                self.alpha=255
+                self.r=min(self.r+3,setting.SIZE[1]+200)
+                self.w=self.r if self.r!=setting.SIZE[1]+200 else max(self.w-3,450)
+
+                if self.w==450: self.is_screen=False
+
+    def is_circle_getting_smaller(self):
+        return self.r!=self.w
+
+    def blit(self,background:pygame.Surface):
+        if self.is_screen:
+            self.surface.fill((0,0,0,0))
+            pygame.draw.circle(self.surface,(*setting.WHITE,self.alpha),Player.center,self.r,self.w)
+            background.blit(self.surface,(0,0))
+
+
+
 
 class Menu(Screen):
     def __init__(self, size=Vector2(*setting.SIZE)+Vector2(2*setting.SIZE[0]//1.25,0)):
@@ -480,6 +515,12 @@ class MainMenu(Screen):
     def is_intro_finished(self):
         return all([button.rect.y==setting.SIZE[1]-self.button_size-20 for button in self.buttons])
 
+
+    def reset(self):
+        for button in self.buttons: button.rect.y=setting.SIZE[1]
+        self.text[1]=Vector2(setting.CENTER[0],0)-Vector2(self.text[0].get_size())//2-Vector2(0,self.text[0].get_size()[1]//2)
+        self.start=False
+
     def update(self):
         if self.start and self.is_screen:
             if self.text[1][1]!=25: self.text[1][1]=min(self.text[1][1]+11*FRAME_SPEED,25)
@@ -487,8 +528,7 @@ class MainMenu(Screen):
                 if button.rect.y!=setting.SIZE[1]-self.button_size-20:
                     button.rect.y=max(button.rect.y-5,setting.SIZE[1]-self.button_size-20)
         elif self.start and not self.is_screen:
-            for button in self.buttons: button.rect.y=setting.SIZE[1]
-            self.start=False
+            self.reset()
         elif not self.start and self.is_screen:
             self.start=True
 
@@ -511,16 +551,19 @@ class MainMenu(Screen):
 class PlayMenu(Screen):
     def __init__(self):
         super().__init__((setting.SIZE[0]//1.25,setting.SIZE[1]))
-        self.buttons=[Button(return_image("lv_1.png",(60,60)),Vector2(self.surface.get_size()[0]//2,self.surface.get_size()[1]//5)),
-                      Button(return_image("lv_2.png",(60,60)),Vector2(self.surface.get_size()[0]//2,self.surface.get_size()[1]//5*2)),
-                      Button(return_image("lv_3.png",(60,60)),Vector2(self.surface.get_size()[0]//2,self.surface.get_size()[1]//5*3))
+        self.buttons=[Button(return_image("lv_1.png",(60,60)),Vector2(self.surface.get_size()[0]//5*1.5,self.surface.get_size()[1]//5*1.5)),
+                      Button(return_image("lv_2.png",(60,60)),Vector2(self.surface.get_size()[0]//5*1.5,self.surface.get_size()[1]//5*2.5)),
+                      Button(return_image("lv_3.png",(60,60)),Vector2(self.surface.get_size()[0]//5*1.5,self.surface.get_size()[1]//5*3.5))
                       ]
-        for b in self.buttons: b.rect.move_ip(-b.image.get_size()[0]//2,0)
         self.buttons[2].alpha=170
         self.buttons[2].image.blit(return_image("locked.png",(60,60)),(0,0))
+        for b in self.buttons: b.rect.move_ip(-b.rect.w//2,0)
         
         self.texts=[
-            (return_text(return_font(30,setting.KOR_FONT,isfile=True),"플레이",color=setting.WHITE),Vector2(self.surface.get_size()[0]//2,10))
+            (return_text(return_font(30,setting.KOR_FONT,isfile=True),"플레이"),Vector2(self.surface.get_size()[0]//2,10)),
+            (return_text(return_font(20,setting.KOR_FONT,isfile=True),"튜토리얼",color=(150,150,150)),Vector2(self.buttons[0].rect.midtop)-Vector2(0,self.buttons[0].rect.h-10)),
+            (return_text(return_font(20,setting.KOR_FONT,isfile=True),"레벨-2",color=(150,150,150)),Vector2(self.buttons[1].rect.midtop)-Vector2(0,self.buttons[1].rect.h-10)),
+            (return_text(return_font(20,setting.KOR_FONT,isfile=True),"레벨-3",color=(150,150,150)),Vector2(self.buttons[2].rect.midtop)-Vector2(0,self.buttons[2].rect.h-10))
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 

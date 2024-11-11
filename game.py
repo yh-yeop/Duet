@@ -1,11 +1,10 @@
 import pygame
 from setting import Setting
-from objects import Objects,Hitbox,Player,PlayerParticle,Intro,Menu,InGame,set_speed,PauseScreen,Vector2
+from objects import Objects,Hitbox,Player,PlayerParticle,Intro,Menu,InGame,set_speed,PauseScreen,ClearScreen,Vector2
 from util import return_image,screen_change,draw_player,return_sound
 
 class Duet(Setting):
     def __init__(self):
-        print("F1: 도움말")
         super().__init__()
         self.init_pygame()
         self.player=pygame.sprite.Group(Player(self.RED,self.PLAYER_CENTER["menu"],"left"),
@@ -22,6 +21,7 @@ class Duet(Setting):
         self.menu=Menu()
         self.in_game=InGame()
         self.pause_screen=PauseScreen()
+        self.clear_screen=ClearScreen()
         self.screens=[self.intro,self.menu,self.in_game]
 
         self.mouse_hitbox=Hitbox(pygame.mouse.get_pos(),pygame.Surface((1,1)))
@@ -36,15 +36,14 @@ class Duet(Setting):
 
 
         self.play=True
+        self.clear=False
+        self.sounds={"death":return_sound("death.mp3"),
+                     "rewind":return_sound("rewind.mp3")}
+
         self.player_area=False
         self.area_surface=pygame.Surface(self.SIZE,pygame.SRCALPHA)
         for angle in range(360):
             pygame.draw.circle(self.area_surface,(*self.WHITE,30),Vector2(self.PLAYER_CENTER["ingame"])+Vector2(Player.distance,0).rotate(angle),Player.r)
-
-
-        self.sounds={"death":return_sound("death.mp3"),
-                     "rewind":return_sound("rewind.mp3")}
-
 
     def init_pygame(self):
         pygame.init()
@@ -53,6 +52,9 @@ class Duet(Setting):
         icon=return_image("icon.jpg")
         pygame.display.set_icon(icon)
         self.set_bgm("Theme_from_Duet")
+
+    def reset_intro(self):
+        self.intro.__init__()
 
     def set_bgm(self,name):
         path="assets/sound/bgm/"
@@ -80,7 +82,7 @@ class Duet(Setting):
                     self.menu.screens[1].start=True
                 elif self.time_count["menu_after_intro"]<=60:
                     for p in self.player: p.speed=1.7
-            if self.time_count["rewind"]:
+            if self.rewind_pause and self.time_count["rewind"]:
                 self.time_count["rewind"]-=1
                 if self.time_count["rewind"]<=0:
                     self.rewind_pause=False
@@ -119,17 +121,14 @@ class Duet(Setting):
                             self.direction=0
                             self.pause=True
                             self.pause_screen.screen_onoff(True)
-                            print(f"일시정지: {self.pause}")
 
                     
                 
                 if self.menu.is_screen:
                     if event.key==pygame.K_LEFT:
                         self.menu.set_direction(1)
-                        print("설정 메뉴(키보드)")
                     if event.key==pygame.K_RIGHT:
                         self.menu.set_direction(-1)
-                        print("플레이 메뉴(키보드)")
 
 
                 if True: # 테스트용 기능
@@ -210,9 +209,22 @@ class Duet(Setting):
         self.menu.direction=0
         self.menu.now=self.MENU_SCREEN["MAIN"]
         self.menu.pos=[-self.SIZE[0]//1.25,0]
+        self.sounds["rewind"].play()
 
     def update(self):
         self.pause_screen.update()
+        self.clear_screen.update()
+        if self.clear and self.clear_screen.is_circle_getting_smaller():
+            screen_change(self.screens,self.menu)
+            for p in self.player:
+                p.distance=Player.distance
+                p.speed=2
+            if self.clear_screen.w==450:
+                self.clear=False
+                self.clear_screen.__init__()
+        elif self.clear_screen.is_screen:
+            self.menu.screens[self.MENU_SCREEN["MAIN"]].reset()
+
         if not self.pause:
             if not self.rewind_pause:
                 for screen in self.screens: screen.update()
@@ -221,7 +233,7 @@ class Duet(Setting):
                         self.menu.set_direction(-1)
                     elif all(self.check["menu"]["main"][self.MAINMENU_BUTTON["SETTING"]]):
                         self.menu.set_direction(1)
-                
+
                 if self.check["menu"]["main_screen"] and all(self.check["menu"]["main_screen"]):
                     if self.check["menu"]["main_screen"][0][0]<self.menu.screens[self.MENU_SCREEN["MAIN"]].surface.get_size()[0]//2: self.menu.set_direction(-1)
                     else: self.menu.set_direction(1)
@@ -232,8 +244,6 @@ class Duet(Setting):
                         self.set_level("tutorial")
                     elif all(self.check["menu"]["play"][1]):
                         self.set_level("level2")
-                    # elif all(self.check["menu"]["play"][2]):
-                    #     self.set_level("level3")
 
                 bgm=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["BGM"]]
                 sfx=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["SFX"]]
@@ -271,11 +281,11 @@ class Duet(Setting):
                     self.direction=0
                 elif all(finished):
                     self.in_game.set_next_level()
-                    Player.set_player_reset(-1 if 270>reset_angle>90 else 1)
+                    Player.set_reset_angle(-1 if 270>reset_angle>90 else 1)
                 if Player.reset_direction:
                     for p in self.player:
                         if p.angle in (0,180):
-                            Player.set_player_reset(0)
+                            Player.set_reset_angle(0)
                             break
                     
                 Player.player_center_update()
@@ -286,18 +296,27 @@ class Duet(Setting):
                 
                 if finished[0] and not finished[1]:
                     self.in_game.level.reset()
-                    for p in self.player: p.reset_particle()
                     screen_change(self.screens,self.menu)
-                    Player.set_player_center(-1)
+                    Player.set_player_center(-0.5)
                     for p in self.player:
-                        p.speed=2
-                    for p in self.player: p.set_rewind_speed()
+                        p.reset_particle()
+                        p.speed=1.5
                     PlayerParticle.set_dy(0)
                     self.pause=False
-                    print(f"메뉴로 돌아옴(레벨 끝남)")
+                    self.clear=True
+                if self.clear: # 클리어 연출
+                    self.menu.screens[self.MENU_SCREEN["MAIN"]].reset()
+                    for p in self.player:
+                        p.speed=min(p.speed+0.01,3.5)
+                        if p.speed>=2.5: p.distance=max(p.distance-Player.distance/500,0)
+                    if not self.player.sprites()[0].distance:
+                        self.clear_screen.is_screen=True
+                    self.player.update(0.5)
 
-            else:
+            else: # rewind_pause일 시
                 self.player.update(0)
+
+
         else:
             if PauseScreen.level_name!=self.in_game.level.name:
                 PauseScreen.set_level_name(self.in_game.level.name)
@@ -306,19 +325,20 @@ class Duet(Setting):
                     self.direction=0
                     self.pause=False
                     self.pause_screen.screen_onoff(False)
-                    print(f"일시정지: {self.pause}")
 
                 if all(self.check["pause"][1]):
                     screen_change(self.screens,self.menu)
                     Player.set_player_center(-1)
+                    PlayerParticle.set_dy(0)
                     for p in self.player:
+                        p.reset_death()
                         p.speed=2
                         p.reset_particle()
                         p.set_rewind_speed()
-                    PlayerParticle.set_dy(0)
                     self.pause=False
                     self.pause_screen.screen_onoff(False)
-                    print(f"메뉴로 돌아옴\n일시정지: {self.pause}")
+                    self.rewind_pause=False
+                    self.sounds["rewind"].play()
 
 
     def collide_check(self):
@@ -354,6 +374,7 @@ class Duet(Setting):
 
         self.intro.blit(self.background)
         
+        self.clear_screen.blit(self.background)
         self.pause_screen.blit(self.background)
 
         if self.player_area:

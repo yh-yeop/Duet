@@ -3,7 +3,7 @@
     "name":"레벨-2",
     "description":null,
     "rotate":null,
-    "next":"level2_5",
+    "next":null,
     "obstacles": [
         {
             "shape": "rect",
