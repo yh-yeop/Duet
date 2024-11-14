@@ -97,7 +97,7 @@ class Player(Objects):
                     if not self.rewind[1]: self.angle=round(self.angle)%360
 
             else:
-                self.angle=(self.angle+Player.reset_direction*(self.speed//2)*FRAME_SPEED)%360
+                self.angle=(self.angle+Player.reset_direction*(self.speed/3*2)*FRAME_SPEED)%360
                 for i in [abs(self.angle-i) for i in (0,180)]:
                     if i<1:
                         self.angle=round(self.angle)
