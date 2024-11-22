@@ -11,7 +11,6 @@ class Duet(Setting):
                                         Player(self.BLUE,self.PLAYER_CENTER["menu"],"right"))
         self.clock=pygame.time.Clock()
         self.direction=1
-        self.now=pygame.time.get_ticks()
         self.time_count={"menu_after_intro":0,
                          "rewind":0}
         self.pause=False
