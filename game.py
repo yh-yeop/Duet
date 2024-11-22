@@ -240,10 +240,10 @@ class Duet(Setting):
                     elif all(self.check["menu"]["play"][1]):
                         self.set_level("level2")
 
-                bgm=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["BGM"]] # 배경음악 온/오프 상태 받아오기
-                sfx=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["SFX"]] # 효과음 온/오프 상태 받아오기
-                if pygame.mixer.music.get_volume()!=int(bgm): # 볼륨과 현재 상태가 다를 시
-                    pygame.mixer.music.set_volume(int(bgm)) # 볼륨을 현재 상태로 조정
+                bgm=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["BGM"]]
+                sfx=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["SFX"]]
+                if pygame.mixer.music.get_volume()!=int(bgm):
+                    pygame.mixer.music.set_volume(int(bgm))
                 if self.sounds["death"].get_volume()!=int(sfx):
                     for k in self.sounds:
                         self.sounds[k].set_volume(int(sfx))
