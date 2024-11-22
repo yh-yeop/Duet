@@ -380,9 +380,4 @@ class Duet(Setting):
         if self.player_area:
                 self.background.blit(self.area_surface,(0,0))
         
-        pygame.display.flip()   
-
-if __name__=="__main__":
-    duet=Duet()
-    duet.mainloop()
-    pygame.quit()
+        pygame.display.flip()
