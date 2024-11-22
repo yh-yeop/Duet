@@ -53,9 +53,6 @@ class Duet(Setting):
         pygame.display.set_icon(icon)
         self.set_bgm("Theme_from_Duet")
 
-    def reset_intro(self):
-        self.intro.__init__()
-
     def set_bgm(self,name):
         path="assets/sound/bgm/"
         try: pygame.mixer.music.load(path+name+".mp3")
@@ -92,8 +89,7 @@ class Duet(Setting):
         if not self.intro.is_screen:
             self.mouse_hitbox.update(pygame.mouse.get_pos())
         dt=self.clock.tick(self.FRAME)
-        set_speed(dt)
-        
+        set_speed(dt) 
 
     def inputs(self):
         keys=pygame.key.get_pressed()
@@ -190,7 +186,6 @@ class Duet(Setting):
                         self.check["menu"]["main_screen"]=collide_pos,event.type==pygame.MOUSEBUTTONDOWN
                 if self.in_game.is_screen:
                     self.check["pause"]=self.pause_screen.button_check(self.mouse_hitbox,event.type==pygame.MOUSEBUTTONDOWN)
-
 
     def set_level(self,lv):
         self.check["menu"]["play"]=False
@@ -340,7 +335,6 @@ class Duet(Setting):
                     self.rewind_pause=False
                     self.sounds["rewind"].play()
 
-
     def collide_check(self):
         if (not self.pause and not self.rewind_pause) and self.in_game.is_screen:
             check=self.in_game.collide_check(self.player.sprites())
@@ -354,10 +348,7 @@ class Duet(Setting):
                 self.time_count["rewind"]=84
                 self.rewind_pause=True
                 PlayerParticle.set_dy(0)
-
-
         
-
     def draw(self):
         self.background.fill(self.BLACK)
 
