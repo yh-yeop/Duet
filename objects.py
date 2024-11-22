@@ -1,13 +1,12 @@
 import pygame
 from pygame.math import Vector2
-from setting import Setting
 from util import *
 from abstract_objects import Objects,Screen,Particle
 import json
 import numpy as np
 import math
 
-setting=Setting()
+
 FRAME_SPEED=(1000//setting.FRAME)/(1000//120)
 def set_speed(dt):
     global FRAME_SPEED
