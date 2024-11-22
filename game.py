@@ -63,13 +63,13 @@ class Duet(Setting):
 
     def mainloop(self):
         while True:
-            self.setting()
-            self.inputs()
-            if not self.play:
+            self.setting() # 변수 초기화
+            self.inputs() # 입력 이벤트 처리
+            if not self.play: # 종료 이벤트 발생 시 반복 종료
                 return
-            self.update()
-            self.collide_check()
-            self.draw()
+            self.update() # 이동 관리
+            self.collide_check() # 충돌 관리
+            self.draw() # 그리기
     
     def setting(self):
         if not self.pause:
