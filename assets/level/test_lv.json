@@ -1,0 +1,65 @@
+{
+    "speed":1.0,
+    "name":"테스트-1",
+    "description":null,
+    "rotate":null,
+    "next":null,
+    "obstacles": [
+        {
+            "shape": "rect",
+            "dx": null,
+            "dy": 2,
+            "x": 0,
+            "y": -150,
+            "w": 250,
+            "h": 38,
+            "angle": null,
+            "angle_plus": null,
+            "dx_plus": null,
+            "dy_plus": null,
+            "alpha_plus":null
+        },
+        {
+            "shape": "rect",
+            "dx": null,
+            "dy": 2,
+            "x": 0,
+            "y": -550,
+            "w": 250,
+            "h": 38,
+            "angle": 90,
+            "angle_plus": null,
+            "dx_plus": null,
+            "dy_plus": null,
+            "alpha_plus":null
+        },
+        {
+            "shape": "rect",
+            "dx": null,
+            "dy": 2,
+            "x": 0,
+            "y": -950,
+            "w": 250,
+            "h": 38,
+            "angle": 180,
+            "angle_plus": null,
+            "dx_plus": null,
+            "dy_plus": null,
+            "alpha_plus":null
+        },
+        {
+            "shape": "rect",
+            "dx": null,
+            "dy": 2,
+            "x": 0,
+            "y": -1350,
+            "w": 250,
+            "h": 38,
+            "angle": 270,
+            "angle_plus": null,
+            "dx_plus": null,
+            "dy_plus": null,
+            "alpha_plus":null
+        }
+    ]
+}

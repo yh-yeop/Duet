@@ -238,6 +238,8 @@ class Duet(Setting):
                         self.set_level("tutorial")
                     elif all(self.check["menu"]["play"][1]):
                         self.set_level("level2")
+                    elif all(self.check["menu"]["play"][3]):
+                        self.set_level("test_lv")
 
                 bgm=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["BGM"]]
                 sfx=self.menu.screens[self.MENU_SCREEN["SETTING"]].get_onoff()[self.SETTINGMENU_BUTTON["SFX"]]
