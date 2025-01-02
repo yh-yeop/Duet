@@ -1,13 +1,12 @@
 import pygame
 from pygame.math import Vector2
-from setting import Setting
 from util import *
 from abstract_objects import Objects,Screen,Particle
 import json
 import numpy as np
 import math
 
-setting=Setting()
+
 FRAME_SPEED=(1000//setting.FRAME)/(1000//120)
 def set_speed(dt):
     global FRAME_SPEED
@@ -305,7 +304,7 @@ class MenuButton(Button):
 
 
 class OnOffButton:
-    def __init__(self,text="Test",flag=False,pos=Vector2(0,200)):
+    def __init__(self,text="Test",flag=True,pos=Vector2(0,200)):
         self.image=pygame.Surface((setting.SIZE[0]//1.25,50))
         self.image.fill(setting.WHITE)
         self.image.blit(return_text(return_font(30,setting.KOR_FONT,isfile=True),text,color=setting.BLACK),(20,0))
@@ -403,14 +402,20 @@ class ClearScreen(Screen):
         self.w=self.r
         self.wait_tick=setting.FRAME*3
         self.alpha=128
+        self.text=[return_text(return_font(30),"클리어"),Vector2(setting.PLAYER_CENTER["menu"])]
+        self.text[0].set_alpha(0)
+        self.text[1]-=Vector2(self.text[0].get_size())//2+Vector2(0,self.text[0].get_size()[1]*2)
     
     def update(self):
         if self.is_screen:
             if self.wait_tick:
                 self.wait_tick-=1
-                self.alpha=min(self.alpha+0.5,220)
+                self.alpha=min(self.alpha+0.5,255)
+                if self.alpha>128:
+                    self.text[0].set_alpha(self.text[0].get_alpha()+2)
             else:
                 self.alpha=255
+                self.text[0].set_alpha(0)
                 self.r=min(self.r+3,setting.SIZE[1]+200)
                 self.w=self.r if self.r!=setting.SIZE[1]+200 else max(self.w-3,450)
 
@@ -422,6 +427,7 @@ class ClearScreen(Screen):
     def blit(self,background:pygame.Surface):
         if self.is_screen:
             self.surface.fill((0,0,0,0))
+            self.surface.blit(*self.text)
             pygame.draw.circle(self.surface,(*setting.WHITE,self.alpha),Player.center,self.r,self.w)
             background.blit(self.surface,(0,0))
 
