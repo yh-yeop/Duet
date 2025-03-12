@@ -9,7 +9,7 @@ Duet은 Kumobius가 개발한 게임, Duet을 python의 pygame 라이브러리�
 ##
 # 게임 실행
 
-run.bat 파일이나, main.py 파일을 통해 게임을 실행할 수 있습니다.  
+**run.bat** 파일이나, **main.py** 파일을 통해 게임을 실행할 수 있습니다.  
 (**pygame** 라이브러리와 **numpy** 모듈이 요구됩니다.)
 
 ##
