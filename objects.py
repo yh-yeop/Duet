@@ -193,13 +193,13 @@ class Obstacle(Objects):
         self.invincible=False
         self.pos=Vector2(self.rect.center)
         self.backup_image=self.image.copy()
-        pygame.draw.rect(self.backup_image,(0,255,0),(0,0,5,5))
+        # pygame.draw.rect(self.backup_image,(0,255,0),(0,0,5,5)) # 장애물의 기준점(좌측 상단 꼭짓점) 표시
         self.mask=pygame.mask.from_surface(self.image)
         self.extra_image_direction=0
 
     def reset(self):
         self.backup_image.fill(setting.WHITE)
-        pygame.draw.rect(self.backup_image,(0,255,0),(0,0,5,5))
+        # pygame.draw.rect(self.backup_image,(0,255,0),(0,0,5,5)) # 장애물의 기준점(좌측 상단 꼭짓점) 표시
     
     def pos_reset(self):
         self.rect.topleft=self.x,self.y
