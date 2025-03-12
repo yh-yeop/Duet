@@ -1,7 +1,4 @@
-﻿# Duet
-
-
-## 개요
+﻿# 개요
 
 이 프로그램은 Kumobius가 개발한 게임, Duet을 Python의 Pygame 라이브러리를 통해 모작한 프로젝트입니다.  
 `소개_영상.mov`
