@@ -231,9 +231,9 @@ class Obstacle(Objects):
         if self.angle_plus:
             self.angle=(self.angle+self.angle_plus*speed*FRAME_SPEED)%360
         if self.angle:
-            self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
-            self.rect=self.image.get_rect(center=self.pos)
-            self.mask=pygame.mask.from_surface(self.image)
+            self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1) # 회전
+            self.rect=self.image.get_rect(center=self.pos) # 좌표 조정
+            self.mask=pygame.mask.from_surface(self.image) # 히트박스 조정
         else:
             self.image=self.backup_image
         if self.alpha_plus and self.pos[1]>self.alpha_plus[0]:
@@ -252,7 +252,7 @@ class Obstacle(Objects):
                 paint=return_image("paint/"+color+"/"+str(np.random.randint(9))+".png")
                 paint=pygame.transform.rotozoom(paint,np.random.randint(360),0.07)
 
-                if self.angle%90:
+                if self.angle%90: # 각도에 따라 계산
                     if self.angle>270:
                         rotate_pos=(Vector2(row[0])-Vector2((0,self.w*math.cos(math.radians(self.angle%90))))).rotate(-self.angle)
                     elif self.angle>180:
@@ -261,10 +261,10 @@ class Obstacle(Objects):
                         rotate_pos=(Vector2(row[0])-Vector2(self.image.get_size()[0],self.h*math.sin(math.radians(self.angle%90)))).rotate(-self.angle)
                     else:
                         rotate_pos=(Vector2(row[0])-Vector2((self.h*math.sin(math.radians(self.angle))),0)).rotate(-self.angle)
-                    self.backup_image.blit(paint,rotate_pos-Vector2(paint.get_size())//2)
+                    self.backup_image.blit(paint,rotate_pos-Vector2(paint.get_size())//2) # 원본 이미지에 페인트
 
                     
-                    self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
+                    self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1) # 회전된 이미지에 반영
                 
                 else:
                     self.backup_image.blit(paint,Vector2(row[0])-Vector2(paint.get_size())//2)
