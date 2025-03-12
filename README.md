@@ -3,7 +3,7 @@
 ##
 # 개요
 
-Duet은 Kumobius가 개발한 게임, Duet을 python의 pygame 라이브러리를 통해 모작한 프로젝트입니다.
+Duet은 Kumobius가 개발한 게임, Duet을 python의 pygame 라이브러리를 통해 모작한 프로젝트입니다.\n
 소개 영상을 통해서 게임의 자세한 설명을 확인할 수 있습니다.
 
 ##
