@@ -193,11 +193,13 @@ class Obstacle(Objects):
         self.invincible=False
         self.pos=Vector2(self.rect.center)
         self.backup_image=self.image.copy()
+        pygame.draw.rect(self.backup_image,(0,255,0),(0,0,5,5))
         self.mask=pygame.mask.from_surface(self.image)
         self.extra_image_direction=0
 
     def reset(self):
         self.backup_image.fill(setting.WHITE)
+        pygame.draw.rect(self.backup_image,(0,255,0),(0,0,5,5))
     
     def pos_reset(self):
         self.rect.topleft=self.x,self.y
@@ -263,11 +265,20 @@ class Obstacle(Objects):
                         rotate_pos=(Vector2(row[0])-Vector2((self.h*math.sin(math.radians(self.angle))),0)).rotate(-self.angle)
                     self.backup_image.blit(paint,rotate_pos-Vector2(paint.get_size())//2) # 원본 이미지에 페인트
 
-                    
+   
                     self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1) # 회전된 이미지에 반영
                 
+                elif self.angle:
+                    rotate_pos=Vector2(row[0]).rotate(-self.angle)
+                    if self.angle==90: rotate_pos+=Vector2(0,self.h)
+                    elif self.angle==180: rotate_pos+=Vector2(self.w,self.h)
+                    elif self.angle==270: rotate_pos+=Vector2(self.w,0)
+                    self.backup_image.blit(paint,rotate_pos-Vector2(paint.get_size())//2)
+
                 else:
                     self.backup_image.blit(paint,Vector2(row[0])-Vector2(paint.get_size())//2)
+                    
+                self.image=pygame.transform.rotozoom(self.backup_image,-self.angle,1)
         return re_value
     
     def blit(self,background:pygame.Surface):
@@ -275,18 +286,20 @@ class Obstacle(Objects):
         background.blit(self.image,self.rect)
         if self.extra_image_direction: background.blit(self.image,Vector2(self.rect.topleft)+Vector2(self.extra_image_direction*setting.SIZE[0],0))
         if Objects.box:
+            background.blit(self.backup_image,self.rect)
             pygame.draw.rect(background,(255,0,0),self.rect,1)
 
 class Button(Objects):
-    def __init__(self,image=return_image(),pos=Vector2(0,0)):
+    def __init__(self,image=return_image(),pos=Vector2(0,0),disable=False):
         self.image=image.convert_alpha()
         self.mask=pygame.mask.from_surface(self.image)
-        self.alpha=255
+        self.disabled=disable
+        self.alpha=255 if not self.disabled else 170
         super().__init__(pos,self.image)
 
     def mouse_check(self,mouse:Hitbox,click:bool):
         re_value=pygame.sprite.collide_mask(self,mouse),click if self.alpha in (255,170) else None,click
-        self.alpha=170 if re_value[0] else 255
+        self.alpha=170 if re_value[0] or self.disabled else 255
         return re_value
     
     def blit(self,background:pygame.Surface):
@@ -559,7 +572,8 @@ class PlayMenu(Screen):
         super().__init__((setting.SIZE[0]//1.25,setting.SIZE[1]))
         self.buttons=[Button(return_image("lv_1.png",(60,60)),Vector2(self.surface.get_size()[0]//5*1.5,self.surface.get_size()[1]//5*1.5)),
                       Button(return_image("lv_2.png",(60,60)),Vector2(self.surface.get_size()[0]//5*1.5,self.surface.get_size()[1]//5*2.5)),
-                      Button(return_image("lv_3.png",(60,60)),Vector2(self.surface.get_size()[0]//5*1.5,self.surface.get_size()[1]//5*3.5))
+                      Button(return_image("lv_3.png",(60,60)),Vector2(self.surface.get_size()[0]//5*1.5,self.surface.get_size()[1]//5*3.5),True),
+                      Button(return_image("lv.png",(60,60)),Vector2(self.surface.get_size()[0]//5*1.5,self.surface.get_size()[1]//5*4.5))
                       ]
         self.buttons[2].alpha=170
         self.buttons[2].image.blit(return_image("locked.png",(60,60)),(0,0))
@@ -569,13 +583,14 @@ class PlayMenu(Screen):
             (return_text(return_font(30,setting.KOR_FONT,isfile=True),"플레이"),Vector2(self.surface.get_size()[0]//2,10)),
             (return_text(return_font(20,setting.KOR_FONT,isfile=True),"튜토리얼",color=(150,150,150)),Vector2(self.buttons[0].rect.midtop)-Vector2(0,self.buttons[0].rect.h-10)),
             (return_text(return_font(20,setting.KOR_FONT,isfile=True),"레벨-2",color=(150,150,150)),Vector2(self.buttons[1].rect.midtop)-Vector2(0,self.buttons[1].rect.h-10)),
-            (return_text(return_font(20,setting.KOR_FONT,isfile=True),"레벨-3",color=(150,150,150)),Vector2(self.buttons[2].rect.midtop)-Vector2(0,self.buttons[2].rect.h-10))
+            (return_text(return_font(20,setting.KOR_FONT,isfile=True),"레벨-3",color=(150,150,150)),Vector2(self.buttons[2].rect.midtop)-Vector2(0,self.buttons[2].rect.h-10)),
+            (return_text(return_font(20,setting.KOR_FONT,isfile=True),"테스트 레벨",color=(150,150,150)),Vector2(self.buttons[3].rect.midtop)-Vector2(0,self.buttons[2].rect.h-10))
                     ]
         for text in self.texts: text[1][0]-=text[0].get_size()[0]//2
 
     def button_check(self,mouse:Hitbox,click:bool):
         for b in self.buttons: b.rect.move_ip(setting.SIZE[0]-setting.SIZE[0]//1.25,0)
-        re_value=[b.mouse_check(mouse,click) for b in self.buttons[:2]]
+        re_value=[b.mouse_check(mouse,click) for b in self.buttons]
         for b in self.buttons: b.rect.move_ip(-(setting.SIZE[0]-setting.SIZE[0]//1.25),0)
         
         return re_value
